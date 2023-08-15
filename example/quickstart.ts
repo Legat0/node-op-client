@@ -29,7 +29,7 @@ config();
   wp.subject = 'Quick start Demo'
   wp.estimatedTime = new Duration({days: 24, hours: 15})
   wp.startDate = new Date()
-  await em.patch(wp, false);   // or patch some fields only eg em.patch(wp, false, ['startDate','_links.type']);
+  await em.patchWP(wp, false);   // or patch some fields only eg em.patchWP(wp, false, ['startDate','_links.type']);
 
   // create new Work Package
   const wp2 = new WP()
