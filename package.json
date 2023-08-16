@@ -45,5 +45,5 @@
     "iso8601-duration": "^1.2.0",
     "keypather": "^3.1.0",
     "reflect-metadata": "^0.1.10"
-  },
+  }
 }
