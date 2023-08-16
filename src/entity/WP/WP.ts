@@ -1,11 +1,11 @@
 import {IEndpoint} from "../Abstract/IEndpoint";
 import IWPBody from "./IWPBody";
-import Abstract from "../Abstract/Abstract";
+import BaseEntity from "../Abstract/BaseEntity";
 import Status from "../Status/Status";
 import Type from "../Type/Type";
 import Link from "../decorators/Link";
 import Project from "../Project/Project";
-import CO from "../CO/CO";
+import CustomOption from "../CustomOption/CustomOption";
 import Duration from "../Abstract/Duration";
 import Field from "../decorators/Field";
 import {User} from "../../index";
@@ -19,8 +19,8 @@ export interface IPartialWPBody extends Partial< Omit<IWPBody, '_links'>>{
 /**
  * Work package
  */
-export default class WP extends Abstract {
-  ['constructor']: typeof WP
+export default class WP extends BaseEntity {
+  // ['constructor']: typeof WP
 
   static url = '/api/v3/work_packages'
 
@@ -52,7 +52,7 @@ export default class WP extends Abstract {
   derivedEstimatedTime: Duration
 
   @Link('project', Project)
-  project: Project
+  project: Project  
   @Embedded('project', Project)
   embeddedProject: Project
 
@@ -66,9 +66,8 @@ export default class WP extends Abstract {
   @Embedded('type', Type)
   embeddedType: Type
 
-  @Link('customField1', CO)
-  module: CO
-
+  @Link('customField1', CustomOption)
+  module: CustomOption
 
   @Link('assignee', User)
   assignee: User

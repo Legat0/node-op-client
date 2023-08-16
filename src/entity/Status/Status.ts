@@ -1,8 +1,8 @@
 import IStatusBody from "./IStatusBody";
-import Abstract from "../Abstract/Abstract";
+import BaseEntity from "../Abstract/BaseEntity";
 import Field from "../decorators/Field";
 
-export default class Status extends Abstract {
+export default class Status extends BaseEntity {
   ['constructor']: typeof Status
 
   static url = '/api/v3/statuses'

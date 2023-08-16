@@ -13,7 +13,7 @@ describe('opi lib WP patch', () => {
       let wp = await createWP()
       wp = await em.get<WP>(WP, wp.id)
       wp.body.subject = ''
-      const patched = await em.patchWP(wp)
+      const patched = await em.patch(wp)
       throw new Error('should not be hire');
     }
     catch(err) {
@@ -25,7 +25,7 @@ describe('opi lib WP patch', () => {
   it('ok', async () => {
     const wp = await createWP()
     wp.body.subject='1234'
-    await em.patchWP(wp)
+    await em.patch(wp)
     expect(wp.body.subject).toBe('1234');
     expect(wp.body.lockVersion).toBe(1);
   })
@@ -33,7 +33,7 @@ describe('opi lib WP patch', () => {
   it('without lockVersion', async () => {
     let wp = await createWP()
     delete wp.body.lockVersion
-    await em.patchWP(wp)
+    await em.patch(wp)
   })
 
 
@@ -42,7 +42,7 @@ describe('opi lib WP patch', () => {
     wp.body.estimatedTime = 'wrong time hire be be be'
     wp.status = new Status(StatusEnum.Closed)
 
-    await em.patchWP(wp, false, ['subject','_links.status'])
+    await em.patch(wp, ['subject','_links.status'], false)
 
     expect(wp.embeddedStatus.id).toBe(StatusEnum.Closed)
   })

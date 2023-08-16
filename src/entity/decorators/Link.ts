@@ -1,10 +1,11 @@
-import Abstract from "../Abstract/Abstract";
+import BaseEntity from "../Abstract/BaseEntity";
 import str2date from "../utils/str2date";
 import date2str from "../utils/date2str";
+import { NullLink } from "../Abstract/IEndpoint";
 
-export default function Link(name: string, type: new (...args: any[]) => Abstract) {
-  return function (target: Abstract, propertyKey: string | symbol): void {
-    function getter(): Abstract {
+export default function Link(name: string, type: new (...args: any[]) => BaseEntity) {
+  return function (target: BaseEntity, propertyKey: string | symbol): void {
+    function getter(): BaseEntity {
       if (this.body._links.hasOwnProperty(name)) {
         const linkSelf = this.body._links[name]
         if (linkSelf.href) {
@@ -15,10 +16,18 @@ export default function Link(name: string, type: new (...args: any[]) => Abstrac
       }
     }
 
-    function setter(value: Abstract) {
-      this._links[name]=value
-      this.body._links[name] = value.self
+    function setter(value: BaseEntity) {
+      if (this.body._links[name]?.href !== value?.self?.href) this.$dirty.push(`_links.${name}`)
+
+      if (value) {
+        this._links[name] = value
+        this.body._links[name] = value.self
+      } else {
+        this._links[name] = null
+        this.body._links[name] = new NullLink()
+      }
     }
+    
 
     Object.defineProperty(target, propertyKey, {
       get: getter,

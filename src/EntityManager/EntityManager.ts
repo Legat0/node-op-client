@@ -1,79 +1,127 @@
 import fetch from "cross-fetch";
 
-import Abstract from "../entity/Abstract/Abstract";
+import BaseEntity from "../entity/Abstract/BaseEntity";
 import { IEndpoint } from "../entity/Abstract/IEndpoint";
 import ClientOAuth2, { Options, Token } from "client-oauth2";
 import WP from "../entity/WP/WP";
-import { config } from "dotenv";
+import { config as dotenvConfig } from "dotenv";
+import EventEmitter from "events";
+import { CollectionFilterItem } from "contracts/CollectionFilterItem";
+import { FilterOperatorType } from "contracts/FilterOperatorEnum";
 
-config();
+dotenvConfig();
 
 interface IFetchInit extends Omit<RequestInit, "body"> {
   body?: BodyInit | object;
 }
 
-interface IApiOptions {
-  authMode: string | "OAUTH" | "APIKEY";
-  apiKeyStorageKey: string;
-  userApiKey?: string;
+function base64Encode(s: string) {
+  return typeof window !== "undefined"
+    ? window.btoa(s)
+    : Buffer.from(s).toString("base64");
 }
 
-function base64Encode(s: string) {
-  return typeof window !== 'undefined' ? window.btoa(s) : Buffer.from(s).toString("base64");
+function getApiKeyFromEnv(): string {
+  if (process.env.OP_API_KEY) {
+    return process.env.OP_API_KEY;
+  } else if (typeof localStorage !== "undefined") {
+    return localStorage.getItem(process.env.OP_API_KEY_STORAGE);
+  }
 }
-export default class EntityManager {
+
+export interface EntityManagerConfig {
+  baseUrl: string;
+  authType: "OAUTH" | "APIKEY";
+  apiKeyOptions?: {
+    getApiKey?: () => string | undefined;
+  };
+  oauthOptions?: Options & {
+    oauthToken?: Token;
+  };
+}
+
+export interface FetchRequest extends RequestInit {
+  url: string;
+}
+export interface GetAllOptions  {    
+    notify?: boolean;
+    filters?: CollectionFilterItem[];
+    sortBy?: string;
+    groupBy?: string;
+    showSums?: boolean;
+    url?: string;  
+}
+export interface GetManyOptions extends GetAllOptions {
+    all?: boolean; 
+    /** page */
+    offset?: number;
+    /** limit */
+    pageSize?: number;    
+}
+
+
+export class EntityManager {
   private OAuth;
   private baseUrl: string;
-  private apiOptions: IApiOptions;
-  token: Token;
-  createLogger: () => any;
+  private config: EntityManagerConfig;
+  private emitter: EventEmitter;
+  oauthToken: Token;
 
-  constructor(options: {
-    baseUrl?: string;
-    apiOptions?: Partial<IApiOptions>;
-    oauthOptions?: Options;
-    oauthToken?: Token; 
-    createLogger: () => any;
-  }) {
-    this.baseUrl = options.baseUrl || process.env.OP_BASE_URL;
-    const fullOauthOptions: Options = {
-      clientId: process.env.OP_CLIENT_ID,
-      clientSecret: process.env.OP_CLIENT_SECRET,
-      ...options.oauthOptions,
-      accessTokenUri: `${options.baseUrl}/oauth/token`,
+  constructor(config?: Partial<EntityManagerConfig>) {
+    this.emitter = new EventEmitter();
+    this.useConfig(config);
+  }
+
+  public useConfig(config?: Partial<EntityManagerConfig>): this {
+    this.baseUrl = config?.baseUrl || process.env.OP_BASE_URL;
+
+    this.config = {
+      baseUrl: process.env.OP_BASE_URL,
+      authType: process.env.OP_AUTH_TYPE === "APIKEY" ? "APIKEY" : "OAUTH",
+      ...config,
+      oauthOptions: {
+        clientId: process.env.OP_CLIENT_ID,
+        clientSecret: process.env.OP_CLIENT_SECRET,
+        accessTokenUri: `${this.baseUrl}/oauth/token`,
+        ...config?.oauthOptions,
+      },
+      apiKeyOptions: {
+        getApiKey: getApiKeyFromEnv,
+        ...config?.apiKeyOptions,
+      },
     };
+
+    const fullOauthOptions: Options = this.config?.oauthOptions;
     if (!fullOauthOptions.clientSecret) {
       fullOauthOptions.authorizationUri = `${this.baseUrl}/oauth/authorize`;
     }
     this.OAuth = new ClientOAuth2(fullOauthOptions);
-    this.apiOptions = {
-      authMode: process.env.OP_AUTH_MODE || "OAUTH",
-      apiKeyStorageKey: process.env.OP_API_KEY_STORAGE || "OP_USER_API_KEY",
-      userApiKey: process.env.OP_API_KEY,
-      ...options?.apiOptions,
-    };
-    this.token = options.oauthToken;
-    this.createLogger = options.createLogger;
+
+    this.oauthToken = this.config?.oauthOptions?.oauthToken;
+    return this;
   }
 
-  async fetch(url: string, options?: IFetchInit) {
+  public onBeforeRequest(listener: (req: FetchRequest) => void) {
+    this.emitter.addListener(this.onBeforeRequest.name, listener);
+  }
+
+  async fetch(url: string | URL, options?: IFetchInit) {
     const requestInit = {
-        headers: {},
-        ...options,
-        body: options && options.body ? JSON.stringify(options.body) : null,
-      },
-      logger = this.createLogger();
+      headers: {},
+      ...options,
+      body: options?.body ? JSON.stringify(options.body) : null,
+    };
 
     if (requestInit.method && requestInit.method.toUpperCase() !== "GET") {
-      requestInit.headers['Content-Type'] = "application/json"
+      requestInit.headers["Content-Type"] = "application/json";
     }
 
     // собираем url
-    url = this.baseUrl + (url.startsWith("/") ? "" : "/") + url;
+    url = this.baseUrl + (url.toString().startsWith("/") ? "" : "/") + url;
 
-    if (this.apiOptions.authMode === "OAUTH") {
+    if (this.config.authType === "OAUTH") {
       // получаем токен из ОП
-      if (!this.token || this.token.expired()) {
+      if (!this.oauthToken || this.oauthToken.expired()) {
         // authorization code flow
         if (
           this.OAuth.options.authorizationUri &&
@@ -83,14 +131,16 @@ export default class EntityManager {
             // let uri = await
             window.location.href = this.OAuth.code.getUri();
           } else {
-            this.token = await this.OAuth.code.getToken(window.location.search);
+            this.oauthToken = await this.OAuth.code.getToken(
+              window.location.search
+            );
             localStorage.setItem(
               "OP_OAUTH_ACCESS_TOKEN",
-              this.token.accessToken
+              this.oauthToken.accessToken
             );
             localStorage.setItem(
               "OP_OAUTH_REFRESH_TOKEN",
-              this.token.refreshToken
+              this.oauthToken.refreshToken
             );
 
             // const url = new URL (window.location.href)
@@ -100,32 +150,28 @@ export default class EntityManager {
         }
         // credential flow
         else {
-          this.token = await this.OAuth.credentials.getToken();
+          this.oauthToken = await this.OAuth.credentials.getToken();
         }
         // подписываем опции запроса заголовком Authorization
-        const signedOptions = this.token.sign({
+        const signedOptions = this.oauthToken.sign({
           url,
           ...requestInit,
         } as any);
         requestInit.headers = signedOptions.headers;
       }
     } else {
-      let apikey: string = ''
-      if (this.apiOptions.userApiKey) {
-        apikey = this.apiOptions.userApiKey
-      } else if (localStorage) {
-        apikey = localStorage.getItem(this.apiOptions.apiKeyStorageKey);
-      }
-      
+      const apikey = this.config.apiKeyOptions.getApiKey();
       requestInit.headers["Authorization"] =
         "Basic " + base64Encode("apikey:" + apikey);
     }
 
-    logger.debug((requestInit.method || "GET").toUpperCase(), url, requestInit);
-
     // выполняем запрос
+    const emit = this.emitter.emit(this.onBeforeRequest.name, {
+      url,
+      ...requestInit,
+    });
     const response = await fetch(url, requestInit);
-    let resultAsText = await response.text();
+    // let resultAsText = await response.text();
     let result;
     // парсим ответ
     if (
@@ -133,9 +179,10 @@ export default class EntityManager {
       "application/hal+json; charset=utf-8"
     ) {
       try {
-        result = JSON.parse(resultAsText);
+        result = await response.json();
       } catch (err) {
-        throw new Error(resultAsText);
+        const resonseText = await response.text();
+        throw new Error(resonseText);
       }
       if (result._type === `Error`) {
         let message = `${response.status} [${result.errorIdentifier}] ${result.message}`;
@@ -158,36 +205,24 @@ export default class EntityManager {
     return result;
   }
 
-  async get<T extends Abstract>(
+  async get<T extends BaseEntity>(
     T,
-    id: number | IEndpoint,
-    notify?: boolean
+    id: number | bigint | IEndpoint
   ): Promise<T> {
     const result = new T(id);
-    return this.reload(result, notify);
+    return this.refresh(result);
   }
 
-  async reload<T extends Abstract>(entity: T, notify?: boolean): Promise<T> {
-    const body = await this.fetch(
-      `${entity.self.href}${notify ? "?notify" : ""}`
-    );
+  async refresh<T extends BaseEntity>(entity: T): Promise<T> {
+    const body = await this.fetch(entity.self.href);
     entity.merge(body);
     entity._links = {};
     return entity;
   }
 
-  async getMany<T extends Abstract>(
+  async getMany<T extends BaseEntity>(
     T,
-    options: {
-      all?: boolean;
-      notify?: boolean;
-      offset?: number;
-      pageSize?: number;
-      filters?: Object[];
-      sortBy?: string;
-      groupBy?: string;
-      showSums?: boolean;
-    } = {}
+    options: GetManyOptions = {}
   ): Promise<Array<T>> {
     const result = [];
     let total;
@@ -204,7 +239,7 @@ export default class EntityManager {
           return key + "=" + value;
         })
         .join("&");
-      const fetchResult = await this.fetch(`${T.url}?${query}`);
+      const fetchResult = await this.fetch(`${options.url || T.url}?${query}`);
       result.push(
         ...fetchResult._embedded.elements.map(
           (eachElement) => new T(eachElement)
@@ -215,75 +250,48 @@ export default class EntityManager {
     return result;
   }
 
-  async patchWP<T extends WP>(
+  async getAll<T extends BaseEntity>(
+    T,
+    options: GetAllOptions = {}
+  ): Promise<Array<T>> {
+    return await this.getMany<T>(T, {...options, all: true })
+  }
+
+  async patch<T extends BaseEntity>(
     entity: T,
-    notify?: boolean,
-    fieldPaths?: Array<keyof T["body"] | string>
+    fieldPaths?: Array<keyof T["body"] | string>,
+    notify?: boolean
   ): Promise<T> {
+    const isWP = entity instanceof WP;
     const patch = JSON.parse(
       JSON.stringify(
         fieldPaths
-          ? entity.bodyScope([...fieldPaths, "lockVersion"])
+          ? entity.bodyScope(isWP ? [...fieldPaths, "lockVersion"] : fieldPaths)
           : entity.body
       )
     );
     delete patch.createdAt;
     delete patch.updatedAt;
-    if (patch.lockVersion === undefined || patch.lockVersion === null) {
-      const actualCopy = await this.get<T>(entity.constructor, entity.id);
-      patch.lockVersion = actualCopy.body.lockVersion;
+    if (entity instanceof WP) {
+      if (patch.lockVersion === undefined || patch.lockVersion === null) {
+        const actualCopy = await this.get<WP>(entity.constructor, entity.id);
+        patch.lockVersion = actualCopy.body.lockVersion;
+      }
     }
 
-    const patchedBody = await this.fetch(
-      `${entity.self.href}${
-        notify !== undefined ? `?notify=${JSON.stringify(notify)}` : ""
-      }`,
-      {
-        method: "PATCH",
-        body: patch,
-      }
-    );
+    const url = new URL(entity.self.href);
+    if (notify !== undefined)
+      url.searchParams.append("notify", JSON.stringify(notify));
+
+    const patchedBody = await this.fetch(url, {
+      method: "PATCH",
+      body: patch,
+    });
     if (!fieldPaths || fieldPaths.length == 0) {
       entity.body = patchedBody;
     } else {
-      entity.body.lockVersion = patchedBody.lockVersion;
-      entity.body.updatedAt = patchedBody.updatedAt;
-      // updating embedded
-      ((fieldPaths as string[]) || [])
-        .filter((fieldPath) => fieldPath.startsWith("_links."))
-        .map((fieldPaths) => fieldPaths.substr(7))
-        .forEach(
-          (fieldName) =>
-            (entity.body._embedded[fieldName] =
-              patchedBody._embedded[fieldName])
-        );
-    }
-    return entity;
-  }
-
-  async patch<T extends Abstract>(
-    entity: T,
-    fieldPaths?: Array<keyof T["body"] | string>,
-    notify?: boolean
-  ): Promise<T> {
-    const patch = JSON.parse(
-      JSON.stringify(fieldPaths ? entity.bodyScope(fieldPaths) : entity.body)
-    );
-    delete patch.createdAt;
-    delete patch.updatedAt;
-
-    const patchedBody = await this.fetch(
-      `${entity.self.href}${
-        notify !== undefined ? `?notify=${JSON.stringify(notify)}` : ""
-      }`,
-      {
-        method: "PATCH",
-        body: patch,
-      }
-    );
-    if (!fieldPaths || fieldPaths.length == 0) {
-      entity.body = patchedBody;
-    } else {
+      if (entity instanceof WP)
+        entity.body.lockVersion = patchedBody.lockVersion;
       entity.body["updatedAt"] = patchedBody
         .updatedAt(
           // updating embedded
@@ -300,13 +308,49 @@ export default class EntityManager {
     return entity;
   }
 
-  async create<T extends Abstract>(entity: T): Promise<T> {
-    const createdBody = await this.fetch(entity.constructor.url, {
+  async create<T extends BaseEntity>(
+    entity: T,
+    options?: { url?: string; notify?: boolean }
+  ): Promise<T> {
+    const url = new URL(options?.url || entity.constructor.url);
+    if (options?.notify !== undefined)
+      url.searchParams.append("notify", JSON.stringify(options?.notify));
+
+    const createdBody = await this.fetch(url, {
       method: "POST",
       body: entity.body,
     });
     entity.body = createdBody;
     return entity;
+  }
+
+  public async first<T extends BaseEntity>(
+    T: any,
+    filters: CollectionFilterItem[]
+  ): Promise<T | null> {
+    const result = await this.getMany<T>(T, {
+      pageSize: 1,
+      filters,
+    });
+
+    return result.length > 0 ? result[0] : null;
+  }
+
+  public async findOrFail<T extends BaseEntity>(
+    T: any,
+    id: number | bigint | IEndpoint
+  ): Promise<T> {
+    return this.get(T, id);
+  }
+
+  public async findBy<T extends BaseEntity>(
+    T: any,
+    key: keyof T["body"] | string,
+    value: any
+  ): Promise<T | null> {
+    // filter[UserExtend.fieldExternalId()] = { operator: '=', values: [id] }
+    const filter = { [key]: { operator: "=" as FilterOperatorType, values: [value] } };
+    return await this.first<T>(T, [filter]);
   }
 
   /**
@@ -325,3 +369,19 @@ export default class EntityManager {
     return result;
   }
 }
+
+export function jsonLogRequestToConsole(request: FetchRequest) {
+  console.debug(
+    JSON.stringify({
+      level: "DEBUG",
+      message: EntityManager.name + ".onBeforeRequest",
+      request,
+    })
+  );
+}
+
+var entityManager = new EntityManager();
+
+entityManager.onBeforeRequest(jsonLogRequestToConsole);
+
+export default entityManager;

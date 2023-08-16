@@ -1,9 +1,15 @@
-import Abstract from "../Abstract/Abstract";
+import BaseEntity from "../Abstract/BaseEntity";
 import ITypeBody from "./IUserBody";
 import Field from "../decorators/Field";
 import IUserBody from "./IUserBody";
 
-export default class User extends Abstract {
+export enum UserStatusEnum {
+  active = 'active',
+  registered = 'registered',
+  locked = 'locked',
+  invited = 'invited',
+}
+export default class User extends BaseEntity {
   ['constructor']: typeof User
 
   static url = '/api/v3/users'
@@ -24,4 +30,7 @@ export default class User extends Abstract {
 
   @Field('email', String)
   email: string
+
+  @Field('status', UserStatusEnum)
+  status: UserStatusEnum
 }

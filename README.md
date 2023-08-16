@@ -34,7 +34,7 @@ config();
   wp.subject = 'Quick start Demo'
   wp.estimatedTime = new Duration({days: 24, hours: 15})
   wp.startDate = new Date()
-  await em.patchWP(wp, false);   // or patch some fields only eg em.patchWP(wp, false, ['startDate','_links.type']);
+  await em.patch(wp, undefined, false);   // or patch some fields only eg em.patch(wp, ['startDate','_links.type'], false);
 
   // create new Work Package
   const wp2 = new WP()
@@ -72,7 +72,7 @@ config();
 
   // get Custom Option by id
   try {
-    const co = await em.get<CO>(CO, 1);
+    const co = await em.get<CustomOption>(CustomOption, 1);
     console.log(co.self.title) // ->In progress
   }
   // this will throw error if you haven't at least one CustomOptions

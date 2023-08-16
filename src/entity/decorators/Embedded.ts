@@ -1,16 +1,16 @@
-import Abstract from "../Abstract/Abstract";
+import BaseEntity from "../Abstract/BaseEntity";
 import str2date from "../utils/str2date";
 import date2str from "../utils/date2str";
 
-export default function Embedded(name: string, type: new (...args: any[]) => Abstract) {
-  return function (target: Abstract, propertyKey: string | symbol): void {
-    function getter():Abstract {
+export default function Embedded(name: string, type: new (...args: any[]) => BaseEntity) {
+  return function (target: BaseEntity, propertyKey: string | symbol): void {
+    function getter():BaseEntity {
       if (this.body._embedded.hasOwnProperty(name)) {
         return new type(this.body._embedded[name])
       }
     }
 
-    function setter(value:Abstract) {
+    function setter(value:BaseEntity) {
         this.body._embedded[name] = value.body
     }
 

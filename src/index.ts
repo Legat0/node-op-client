@@ -1,7 +1,7 @@
-import EntityManager from "./EntityManager/EntityManager";
-import Abstract from "./entity/Abstract/Abstract";
+import entityManager, {EntityManager} from "./EntityManager/EntityManager";
+import BaseEntity from "./entity/Abstract/BaseEntity";
 import Duration from "./entity/Abstract/Duration";
-import CO from "./entity/CO/CO";
+import CustomOption from "./entity/CustomOption/CustomOption";
 import Project from "./entity/Project/Project";
 import Status from "./entity/Status/Status";
 import Type from "././entity/Type/Type";
@@ -16,8 +16,8 @@ import StatusEnum from "./entity/Status/StatusEnum";
 
 export {
   EntityManager,
-  Abstract,
-  CO,
+  BaseEntity as Abstract,
+  CustomOption,
   Project,
   Status,
   StatusEnum,
@@ -28,5 +28,11 @@ export {
   Field,
   Embedded,
   Duration,
-  User,
+  User,  
 };
+
+export default entityManager
+
+export function customFieldName(id?: number | bigint) {
+  return id ? 'customField' + id : ''
+}

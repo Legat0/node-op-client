@@ -5,3 +5,7 @@ export interface IEndpoint {
   type?: string,
   templated?: boolean,
 }
+
+export  class NullLink implements IEndpoint {
+  public href = null
+}

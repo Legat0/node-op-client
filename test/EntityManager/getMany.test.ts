@@ -3,8 +3,8 @@ import em from "../em";
 import Type from "../../src/entity/Type/Type";
 import Project from "../../src/entity/Project/Project";
 import createWP from "./createWP";
-import CO from "../../src/entity/CO/CO";
 import User from "../../src/entity/User/User";
+import { CustomOption } from "../../src";
 
 // https://urz.open.ru:8091/projects/dash/work_packages/96
 describe('EntityManager#getMany', () => {
@@ -69,9 +69,9 @@ describe('EntityManager#getMany', () => {
     })
 
     it.skip('write custom options', async () => {
-      const res = await em.getMany<CO>(CO, {})
+      const res = await em.getMany<CustomOption>(CustomOption, {})
       expect(res).toBeInstanceOf(Array);
-      expect(res[0]).toBeInstanceOf(CO);
+      expect(res[0]).toBeInstanceOf(CustomOption);
       console.table(
         res
           .map(item => ({id: item.body.id, title: item.body._links.self.title,}))
