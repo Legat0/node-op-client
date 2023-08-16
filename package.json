@@ -26,7 +26,7 @@
     "server:up": "docker-compose up -d",
     "server:down": "docker-compose down",
     "test:integration": "jest  --runInBand --testMatch=\"<rootDir>/test/entity/**/*.test.ts\"",
-    "postinstall": "npm i && npm run build"
+    "_postinstall": "npm ci && npm run build"
   },
   "devDependencies": {
     "@types/jest": "^26.0.9",
