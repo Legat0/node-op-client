@@ -5,7 +5,7 @@ describe('auth', () => {
     const em = new EntityManager({
       authType: 'APIKEY',      
     })
-    const wp = await em.find<WP>(WP, 1)
+    const wp = await em.findOrFail<WP>(WP, 1)
     expect(wp.id).toBe(1);
   })
 
@@ -16,7 +16,7 @@ describe('auth', () => {
         getApiKey: () => {return process.env.OP_API_KEY}
       }     
     })
-    const wp = await em.find<WP>(WP, 1)
+    const wp = await em.findOrFail<WP>(WP, 1)
     expect(wp.id).toBe(1);
   })
 
@@ -28,12 +28,12 @@ describe('auth', () => {
         clientSecret: process.env.OP_CLIENT_SECRET
       }   
     })
-    const wp = await em.find<WP>(WP, 1)
+    const wp = await em.findOrFail<WP>(WP, 1)
     expect(wp.id).toBe(1);
   })
 
   it('env ', async () => {   
-    const wp = await entityManager.find<WP>(WP, 1)
+    const wp = await entityManager.findOrFail<WP>(WP, 1)
     expect(wp.id).toBe(1);
   })
 

@@ -6,7 +6,7 @@ import ClientOAuth2, { Options, Token } from "client-oauth2";
 import WP from "../entity/WP/WP";
 import { config as dotenvConfig } from "dotenv";
 import EventEmitter from "events";
-import { CollectionFilterItem } from "contracts/CollectionFilterItem";
+import { EntityFilterItem } from "contracts/EntityFilterItem";
 import { FilterOperatorType } from "contracts/FilterOperatorEnum";
 
 dotenvConfig();
@@ -43,22 +43,21 @@ export interface EntityManagerConfig {
 export interface FetchRequest extends RequestInit {
   url: string;
 }
-export interface GetAllOptions  {    
-    notify?: boolean;
-    filters?: CollectionFilterItem[];
-    sortBy?: string;
-    groupBy?: string;
-    showSums?: boolean;
-    url?: string;  
+export interface GetAllOptions {
+  notify?: boolean;
+  filters?: EntityFilterItem[];
+  sortBy?: string;
+  groupBy?: string;
+  showSums?: boolean;
+  url?: string;
 }
 export interface GetManyOptions extends GetAllOptions {
-    all?: boolean; 
-    /** page */
-    offset?: number;
-    /** limit */
-    pageSize?: number;    
+  all?: boolean;
+  /** page */
+  offset?: number;
+  /** limit */
+  pageSize?: number;
 }
-
 
 export class EntityManager {
   private OAuth;
@@ -152,13 +151,14 @@ export class EntityManager {
         else {
           this.oauthToken = await this.OAuth.credentials.getToken();
         }
-        // подписываем опции запроса заголовком Authorization
-        const signedOptions = this.oauthToken.sign({
-          url,
-          ...requestInit,
-        } as any);
-        requestInit.headers = signedOptions.headers;
       }
+
+      // подписываем опции запроса заголовком Authorization
+      const signedOptions = this.oauthToken.sign({
+        url,
+        ...requestInit,
+      } as any);
+      requestInit.headers = signedOptions.headers;
     } else {
       const apikey = this.config.apiKeyOptions.getApiKey();
       requestInit.headers["Authorization"] =
@@ -254,7 +254,7 @@ export class EntityManager {
     T,
     options: GetAllOptions = {}
   ): Promise<Array<T>> {
-    return await this.getMany<T>(T, {...options, all: true })
+    return await this.getMany<T>(T, { ...options, all: true });
   }
 
   async patch<T extends BaseEntity>(
@@ -326,7 +326,7 @@ export class EntityManager {
 
   public async first<T extends BaseEntity>(
     T: any,
-    filters: CollectionFilterItem[]
+    filters: EntityFilterItem[]
   ): Promise<T | null> {
     const result = await this.getMany<T>(T, {
       pageSize: 1,
@@ -349,7 +349,9 @@ export class EntityManager {
     value: any
   ): Promise<T | null> {
     // filter[UserExtend.fieldExternalId()] = { operator: '=', values: [id] }
-    const filter = { [key]: { operator: "=" as FilterOperatorType, values: [value] } };
+    const filter = {
+      [key]: { operator: "=" as FilterOperatorType, values: [value] },
+    };
     return await this.first<T>(T, [filter]);
   }
 

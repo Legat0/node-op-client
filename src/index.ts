@@ -13,10 +13,11 @@ import Field from "./entity/decorators/Field";
 import Link from "./entity/decorators/Link";
 import Embedded from "./entity/decorators/Embedded";
 import StatusEnum from "./entity/Status/StatusEnum";
+import { EntityFilterItem } from "contracts/EntityFilterItem";
 
 export {
   EntityManager,
-  BaseEntity as Abstract,
+  BaseEntity,
   CustomOption,
   Project,
   Status,
@@ -29,6 +30,8 @@ export {
   Embedded,
   Duration,
   User,  
+
+  EntityFilterItem
 };
 
 export default entityManager

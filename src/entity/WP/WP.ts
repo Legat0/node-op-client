@@ -1,6 +1,6 @@
 import {IEndpoint} from "../Abstract/IEndpoint";
 import IWPBody from "./IWPBody";
-import BaseEntity from "../Abstract/BaseEntity";
+import BaseEntity, { IPartialAbstractBody } from "../Abstract/BaseEntity";
 import Status from "../Status/Status";
 import Type from "../Type/Type";
 import Link from "../decorators/Link";
@@ -24,7 +24,7 @@ export default class WP extends BaseEntity {
 
   static url = '/api/v3/work_packages'
 
-  constructor(init?: number | IEndpoint | IPartialWPBody ) {
+  constructor(init?: number | IEndpoint | IPartialAbstractBody ) {
     super(init)
   }
 

@@ -22,6 +22,7 @@
     "test": "npm run test:unit",
     "test:unit": "jest  --runInBand --testMatch=\"<rootDir>/test/entity/**/*.test.ts\"",
     "test:em": "jest --runInBand --detectOpenHandles --testMatch=\"<rootDir>/test/EntityManager/**/get.test.ts\"",
+    "test:model": "jest --runInBand --detectOpenHandles --testMatch=\"<rootDir>/test/model/**/*.test.ts\"",
     "test:auth": "jest --runInBand --detectOpenHandles --testMatch=\"<rootDir>/test/auth.test.ts\"",
     "server:up": "docker-compose up -d",
     "server:down": "docker-compose down",

@@ -8,66 +8,23 @@ import entityManager, {
   GetAllOptions,
   GetManyOptions,
 } from "../../EntityManager/EntityManager";
-import { CollectionFilterItem } from "contracts/CollectionFilterItem";
+import {
+  EntityFieldFilter,
+  EntityFilterItem,
+} from "contracts/EntityFilterItem";
+import { FilterOperatorType } from "contracts/FilterOperatorEnum";
 
-interface IPartialAbstractBody extends Partial<Omit<IWPBody, "_links">> {
-  _links?: Partial<IAbstractBody["_links"]>;
-}
+export interface IPartialAbstractBody extends Partial<IAbstractBody> {}
+
+// interface IPartialAbstractBody extends Partial<Omit<IWPBody, "_links">> {
+//   _links?: Partial<IAbstractBody["_links"]>;
+// }
 
 // type InstanceType<T extends abstract new (...args: any) => any> = T extends abstract new (...args: any) => infer R ? R : any;
 
 // interface EntityRow {
 //   find<T extends Abstract>(this: T, id: number | bigint): Promise<InstanceType<T>>;
 // }
-
-export class EntityRequestBuilder<T extends BaseEntity> {
-  private service?: EntityManager;
-  private entity: any;
-  private requstParams: GetManyOptions;
-  constructor(T: any, requstParams?: GetManyOptions, service?: EntityManager) {
-    this.entity = T;
-    this.service = service || entityManager;
-    this.requstParams = requstParams || {};
-  }
-
-  public useService(service?: EntityManager): this {
-    if (service) this.service = service;
-    return this;
-  }
-
-  public filters(filters: CollectionFilterItem[]): this {
-    this.requstParams.filters = filters;
-    return this;
-  }
-
-  public offset(offset: number): this {
-    this.requstParams.offset = offset;
-    return this;
-  }
-
-  public pageSize(pageSize: number): this {
-    this.requstParams.pageSize = pageSize;
-    return this;
-  }
-
-  public async first() {
-    return await this.service.first<T>(this.entity, this.requstParams.filters);
-  }
-
-  public async getAll(options: GetAllOptions) {
-    return await this.service.getAll<T>(this.entity, {
-      ...this.requstParams,
-      ...options,
-    });
-  }
-
-  public async getMany(options: GetManyOptions) {
-    return await this.service.getMany<T>(this.entity, {
-      ...this.requstParams,
-      ...options,
-    });
-  }
-}
 
 export default class BaseEntity {
   ["constructor"]: typeof BaseEntity;
@@ -121,8 +78,11 @@ export default class BaseEntity {
     return this.$service;
   }
 
-  public static request<Entity extends BaseEntity>(this: Entity) {
-    return new EntityRequestBuilder<Entity>(this);
+  public static request<Entity extends BaseEntity>(
+    this: any,
+    options?: GetManyOptions
+  ) {
+    return new EntityRequestBuilder<Entity>(this, options);
   }
 
   get id(): number {
@@ -204,7 +164,90 @@ export default class BaseEntity {
     return entityManager.findOrFail<Entity>(this, id);
   }
 
+  public static async first<T extends BaseEntity>(
+    filters?: EntityFilterItem[]
+  ) {
+    return await entityManager.first<T>(this, filters);
+  }
+
+  public static async findBy<T extends BaseEntity>(
+    key: keyof T["body"] | string,
+    value: any
+  ): Promise<T | null> {
+    const filter = {
+      [key]: { operator: "=" as FilterOperatorType, values: [value] },
+    };
+    return await this.first<T>([filter]);
+  }
+
+  public static async getAll<T extends BaseEntity>(options?: GetAllOptions) {
+    return await entityManager.getAll<T>(this, options);
+  }
+
+  public static async getMany<T extends BaseEntity>(options?: GetManyOptions) {
+    return await entityManager.getMany<T>(this, options);
+  }
+
   // public find<Entity extends Abstract>(this: Entity, id: number | bigint) {
   //   return entityManager.find<Entity>(this, id)
   // }
+}
+
+export class EntityRequestBuilder<T extends BaseEntity> {
+  private service?: EntityManager;
+  private entity: any;
+  private requstParams: GetManyOptions;
+
+  constructor(T: any, requstParams?: GetManyOptions, service?: EntityManager) {
+    this.entity = T;
+    this.service = service || entityManager;
+    this.requstParams = requstParams || { filters: [] };
+  }
+
+  public useService(service?: EntityManager): this {
+    if (service) this.service = service;
+    return this;
+  }
+
+  public filters(filters: EntityFilterItem[]): this {
+    this.requstParams.filters = filters;
+    return this;
+  }
+  public addFilter(
+    key: keyof T["body"] | string,
+    operator: EntityFieldFilter["operator"],
+    values: EntityFieldFilter["values"]
+  ): this {
+    const filter: EntityFilterItem = { [key]: { operator, values } };
+    this.requstParams.filters.push(filter);
+    return this;
+  }
+
+  public offset(offset: number): this {
+    this.requstParams.offset = offset;
+    return this;
+  }
+
+  public pageSize(pageSize: number): this {
+    this.requstParams.pageSize = pageSize;
+    return this;
+  }
+
+  public async first() {
+    return await this.service.first<T>(this.entity, this.requstParams.filters);
+  }
+
+  public async getAll(options: GetAllOptions) {
+    return await this.service.getAll<T>(this.entity, {
+      ...this.requstParams,
+      ...options,
+    });
+  }
+
+  public async getMany(options: GetManyOptions) {
+    return await this.service.getMany<T>(this.entity, {
+      ...this.requstParams,
+      ...options,
+    });
+  }
 }
