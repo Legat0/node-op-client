@@ -3,7 +3,7 @@ import IAbstractBody from "./IAbstractBody";
 import set from "keypather/set";
 import get from "keypather/get";
 import IWPBody from "../WP/IWPBody";
-import entityManager, {
+import {
   EntityManager,
   GetAllOptions,
   GetManyOptions,
@@ -26,10 +26,11 @@ export interface IPartialAbstractBody extends Partial<IAbstractBody> {}
 //   find<T extends Abstract>(this: T, id: number | bigint): Promise<InstanceType<T>>;
 // }
 
-export default class BaseEntity {
+export default abstract class BaseEntity {
   ["constructor"]: typeof BaseEntity;
 
-  static url = "/should_be_defined";
+  static url: string = "/should_be_defined";
+
   /** Массив измененных полей */
   public $dirty: string[] = [];
 
@@ -158,49 +159,49 @@ export default class BaseEntity {
     }
   }
 
-  public static async findOrFail<Entity extends BaseEntity>(
+  public static async findOrFail<T extends BaseEntity>(this: { new(): T},
     id: number | bigint
-  ): Promise<Entity> {
-    return entityManager.findOrFail<Entity>(this, id);
+  ): Promise<T> {
+    return EntityManager.instance.findOrFail<T>(this, id);
   }
 
   public static async first<T extends BaseEntity>(
+    this: { new(): T},
     filters?: EntityFilterItem[]
-  ) {
-    return await entityManager.first<T>(this, filters);
+  ) {    
+    return await EntityManager.instance.first<T>(this, filters);
   }
 
   public static async findBy<T extends BaseEntity>(
+    this: { new(): T},
     key: keyof T["body"] | string,
     value: any
   ): Promise<T | null> {
     const filter = {
       [key]: { operator: "=" as FilterOperatorType, values: [value] },
     };
-    return await this.first<T>([filter]);
+   
+    return await EntityManager.instance.first<T>(this, [filter]);
   }
 
-  public static async getAll<T extends BaseEntity>(options?: GetAllOptions) {
-    return await entityManager.getAll<T>(this, options);
+  public static async getAll<T extends BaseEntity>(this: { new(): T}, options?: GetAllOptions) {
+    return await EntityManager.instance.getAll<T>(this, options);
   }
 
-  public static async getMany<T extends BaseEntity>(options?: GetManyOptions) {
-    return await entityManager.getMany<T>(this, options);
+  public static async getMany<T extends BaseEntity>(this: { new(): T}, options?: GetManyOptions) {
+    return await EntityManager.instance.getMany<T>(this, options);
   }
 
-  // public find<Entity extends Abstract>(this: Entity, id: number | bigint) {
-  //   return entityManager.find<Entity>(this, id)
-  // }
 }
 
 export class EntityRequestBuilder<T extends BaseEntity> {
   private service?: EntityManager;
-  private entity: any;
+  private entity: { new(): T};
   private requstParams: GetManyOptions;
 
-  constructor(T: any, requstParams?: GetManyOptions, service?: EntityManager) {
+  constructor(T: { new(): T}, requstParams?: GetManyOptions, service?: EntityManager) {
     this.entity = T;
-    this.service = service || entityManager;
+    this.service = service || EntityManager.instance;
     this.requstParams = requstParams || { filters: [] };
   }
 

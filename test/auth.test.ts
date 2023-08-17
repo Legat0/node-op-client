@@ -1,9 +1,10 @@
 import entityManager, { EntityManager, WP } from "../src"
+import { AuthTypeEnum } from "../src/EntityManager/EntityManager"
 
 describe('auth', () => {
   test('apikey env', async () => {
     const em = new EntityManager({
-      authType: 'APIKEY',      
+      authType: AuthTypeEnum.APIKEY,      
     })
     const wp = await em.findOrFail<WP>(WP, 1)
     expect(wp.id).toBe(1);
@@ -11,7 +12,7 @@ describe('auth', () => {
 
   test('apikey custom', async () => {
     const em = new EntityManager({
-      authType: 'APIKEY', 
+      authType: AuthTypeEnum.APIKEY, 
       apiKeyOptions: {
         getApiKey: () => {return process.env.OP_API_KEY}
       }     
@@ -22,7 +23,7 @@ describe('auth', () => {
 
   test('oauth', async () => {
     const em = new EntityManager({
-      authType: 'OAUTH', 
+      authType: AuthTypeEnum.OAUTH, 
       oauthOptions: {
         clientId: process.env.OP_CLIENT_ID,
         clientSecret: process.env.OP_CLIENT_SECRET

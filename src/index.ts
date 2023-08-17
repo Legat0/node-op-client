@@ -1,4 +1,4 @@
-import entityManager, {EntityManager} from "./EntityManager/EntityManager";
+import entityManager, {EntityManager ,EntityManagerConfig, AuthTypeEnum} from "./EntityManager/EntityManager";
 import BaseEntity from "./entity/Abstract/BaseEntity";
 import Duration from "./entity/Abstract/Duration";
 import CustomOption from "./entity/CustomOption/CustomOption";
@@ -17,6 +17,8 @@ import { EntityFilterItem } from "contracts/EntityFilterItem";
 
 export {
   EntityManager,
+  EntityManagerConfig,
+  AuthTypeEnum,
   BaseEntity,
   CustomOption,
   Project,

@@ -24,9 +24,13 @@ function getApiKeyFromLocalStorage(): string {
   return ''
 }
 
+export enum AuthTypeEnum {
+  OAUTH = 'OAUTH',
+  APIKEY = 'APIKEY'
+}
 export interface EntityManagerConfig {
   baseUrl: string;
-  authType: "OAUTH" | "APIKEY";
+  authType: AuthTypeEnum;
   apiKeyOptions?: {
     getApiKey?: () => string | undefined;
   };
@@ -70,7 +74,7 @@ export class EntityManager {
   public useConfig(config?: Partial<EntityManagerConfig>): this {
     this.config = {
       baseUrl: 'http://localhost',
-      authType: "APIKEY",
+      authType: AuthTypeEnum.APIKEY,
       ...config,     
       apiKeyOptions: {
         getApiKey: getApiKeyFromLocalStorage,

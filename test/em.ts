@@ -1,11 +1,11 @@
-import { EntityManager } from "../src/EntityManager/EntityManager";
+import { EntityManager, AuthTypeEnum } from "../src/EntityManager/EntityManager";
 import dotenv from "dotenv";
 
 dotenv.config();
 
 EntityManager.instance.useConfig({
   baseUrl: process.env.OP_BASE_URL,
-  authType: process.env.OP_AUTH_TYPE === "APIKEY" ? "APIKEY" : "OAUTH",
+  authType: AuthTypeEnum[process.env.OP_AUTH_TYPE||''],
   apiKeyOptions: {
     getApiKey: () => {
       return process.env.OP_API_KEY || "";
