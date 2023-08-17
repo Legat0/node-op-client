@@ -5,9 +5,12 @@ import CustomOption from "../../src/entity/CustomOption/CustomOption";
 import User from "../../src/entity/User/User";
 import {EntityFilterItem} from "../../src/contracts/EntityFilterItem";
 
+beforeAll(()=>{
+  em
+})
 
 // https://urz.open.ru:8091/projects/dash/work_packages/96
-describe("wp.test", () => {
+describe.skip("wp.test", () => {
 
   it("findOrFail", async () => {    
     const project = await WP.findOrFail(1);

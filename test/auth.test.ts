@@ -1,7 +1,7 @@
 import entityManager, { EntityManager, WP } from "../src"
 
 describe('auth', () => {
-  it('apikey env', async () => {
+  test('apikey env', async () => {
     const em = new EntityManager({
       authType: 'APIKEY',      
     })
@@ -9,7 +9,7 @@ describe('auth', () => {
     expect(wp.id).toBe(1);
   })
 
-  it('apikey custom', async () => {
+  test('apikey custom', async () => {
     const em = new EntityManager({
       authType: 'APIKEY', 
       apiKeyOptions: {
@@ -20,7 +20,7 @@ describe('auth', () => {
     expect(wp.id).toBe(1);
   })
 
-  it('oauth', async () => {
+  test('oauth', async () => {
     const em = new EntityManager({
       authType: 'OAUTH', 
       oauthOptions: {
@@ -32,7 +32,7 @@ describe('auth', () => {
     expect(wp.id).toBe(1);
   })
 
-  it('env ', async () => {   
+  test('env ', async () => {   
     const wp = await entityManager.findOrFail<WP>(WP, 1)
     expect(wp.id).toBe(1);
   })

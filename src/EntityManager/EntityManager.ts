@@ -1,32 +1,27 @@
-import fetch from "cross-fetch";
-
+import fetch from  'cross-fetch'
 import BaseEntity from "../entity/Abstract/BaseEntity";
 import { IEndpoint } from "../entity/Abstract/IEndpoint";
 import ClientOAuth2, { Options, Token } from "client-oauth2";
 import WP from "../entity/WP/WP";
-import { config as dotenvConfig } from "dotenv";
 import EventEmitter from "events";
 import { EntityFilterItem } from "contracts/EntityFilterItem";
 import { FilterOperatorType } from "contracts/FilterOperatorEnum";
-
-dotenvConfig();
 
 interface IFetchInit extends Omit<RequestInit, "body"> {
   body?: BodyInit | object;
 }
 
-function base64Encode(s: string) {
+function base64Encode(s: string): string {
   return typeof window !== "undefined"
     ? window.btoa(s)
     : Buffer.from(s).toString("base64");
 }
 
-function getApiKeyFromEnv(): string {
-  if (process.env.OP_API_KEY) {
-    return process.env.OP_API_KEY;
-  } else if (typeof localStorage !== "undefined") {
-    return localStorage.getItem(process.env.OP_API_KEY_STORAGE);
+function getApiKeyFromLocalStorage(): string {
+  if (typeof localStorage !== "undefined") {
+    return localStorage.getItem('OP_API_KEY');
   }
+  return ''
 }
 
 export interface EntityManagerConfig {
@@ -61,10 +56,11 @@ export interface GetManyOptions extends GetAllOptions {
 
 export class EntityManager {
   private OAuth;
-  private baseUrl: string;
   private config: EntityManagerConfig;
   private emitter: EventEmitter;
   oauthToken: Token;
+
+  public static instance: EntityManager
 
   constructor(config?: Partial<EntityManagerConfig>) {
     this.emitter = new EventEmitter();
@@ -72,27 +68,23 @@ export class EntityManager {
   }
 
   public useConfig(config?: Partial<EntityManagerConfig>): this {
-    this.baseUrl = config?.baseUrl || process.env.OP_BASE_URL;
-
     this.config = {
-      baseUrl: process.env.OP_BASE_URL,
-      authType: process.env.OP_AUTH_TYPE === "APIKEY" ? "APIKEY" : "OAUTH",
-      ...config,
-      oauthOptions: {
-        clientId: process.env.OP_CLIENT_ID,
-        clientSecret: process.env.OP_CLIENT_SECRET,
-        accessTokenUri: `${this.baseUrl}/oauth/token`,
-        ...config?.oauthOptions,
-      },
+      baseUrl: 'http://localhost',
+      authType: "APIKEY",
+      ...config,     
       apiKeyOptions: {
-        getApiKey: getApiKeyFromEnv,
+        getApiKey: getApiKeyFromLocalStorage,
         ...config?.apiKeyOptions,
       },
     };
+    this.config.oauthOptions = {
+      accessTokenUri: `${this.config.baseUrl}/oauth/token`,
+      ...config?.oauthOptions,
+    }
 
     const fullOauthOptions: Options = this.config?.oauthOptions;
     if (!fullOauthOptions.clientSecret) {
-      fullOauthOptions.authorizationUri = `${this.baseUrl}/oauth/authorize`;
+      fullOauthOptions.authorizationUri = `${this.config.baseUrl}/oauth/authorize`;
     }
     this.OAuth = new ClientOAuth2(fullOauthOptions);
 
@@ -116,7 +108,7 @@ export class EntityManager {
     }
 
     // собираем url
-    url = this.baseUrl + (url.toString().startsWith("/") ? "" : "/") + url;
+    url = this.config.baseUrl + (url.toString().startsWith("/") ? "" : "/") + url;
 
     if (this.config.authType === "OAUTH") {
       // получаем токен из ОП
@@ -385,5 +377,7 @@ export function jsonLogRequestToConsole(request: FetchRequest) {
 var entityManager = new EntityManager();
 
 entityManager.onBeforeRequest(jsonLogRequestToConsole);
+
+EntityManager.instance = entityManager
 
 export default entityManager;
