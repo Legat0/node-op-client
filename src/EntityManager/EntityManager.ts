@@ -42,10 +42,12 @@ export interface EntityManagerConfig {
 export interface FetchRequest extends RequestInit {
   url: string;
 }
+
+
 export interface GetAllOptions {
   notify?: boolean;
   filters?: EntityFilterItem[];
-  sortBy?: string;
+  sortBy?: Map<string, 'asc'|'desc'>;
   groupBy?: string;
   showSums?: boolean;
   url?: string;
@@ -229,9 +231,12 @@ export class EntityManager {
     ) {
       const query = Object.entries({ ...options, offset })
         .map(([key, value]) => {
+
           if (key === "filters") {
             value = JSON.stringify(value);
-          }
+          } else if (key === 'sortBy'){
+            value = JSON.stringify([...(value as GetAllOptions['sortBy'])])
+          } 
           return key + "=" + value;
         })
         .join("&");

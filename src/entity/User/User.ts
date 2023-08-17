@@ -1,5 +1,4 @@
 import BaseEntity from "../Abstract/BaseEntity";
-import ITypeBody from "./IUserBody";
 import Field from "../decorators/Field";
 import IUserBody from "./IUserBody";
 

@@ -7,8 +7,15 @@ export default class Status extends BaseEntity {
 
   static url = '/api/v3/statuses'
 
-  body: IStatusBody
+  @Field('name', String)
+  name: string | null
+
+  @Field('externalId', String)
+  externalId: string
 
   @Field('isClosed', Boolean)
   isClosed:boolean
+  
+  body: IStatusBody
+
 }

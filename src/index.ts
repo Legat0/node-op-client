@@ -1,6 +1,7 @@
 import entityManager, {EntityManager ,EntityManagerConfig, AuthTypeEnum} from "./EntityManager/EntityManager";
 import BaseEntity from "./entity/Abstract/BaseEntity";
 import Duration from "./entity/Abstract/Duration";
+import EntityRequestBuilder from "./entity/Abstract/EntityRequestBuilder";
 import CustomOption from "./entity/CustomOption/CustomOption";
 import Project from "./entity/Project/Project";
 import Status from "./entity/Status/Status";
@@ -20,6 +21,7 @@ export {
   EntityManagerConfig,
   AuthTypeEnum,
   BaseEntity,
+  EntityRequestBuilder,
   CustomOption,
   Project,
   Status,
