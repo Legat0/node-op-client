@@ -1,4 +1,4 @@
-export default function (str:string):Date {
+export default function (str:string):Date | null {
   if (!str){
     return null
   }

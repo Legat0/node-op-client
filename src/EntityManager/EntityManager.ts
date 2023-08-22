@@ -1,5 +1,7 @@
-import fetch from  'cross-fetch'
-import BaseEntity from "../entity/Abstract/BaseEntity";
+import fetch from "cross-fetch";
+import BaseEntity, {
+  EntityCollectionElement,
+} from "../entity/Abstract/BaseEntity";
 import { IEndpoint } from "../entity/Abstract/IEndpoint";
 import ClientOAuth2, { Options, Token } from "client-oauth2";
 import WP from "../entity/WP/WP";
@@ -17,56 +19,58 @@ function base64Encode(s: string): string {
     : Buffer.from(s).toString("base64");
 }
 
-function getApiKeyFromLocalStorage(): string {
+function getApiKeyFromLocalStorage(): string | null {
   if (typeof localStorage !== "undefined") {
-    return localStorage.getItem('OP_API_KEY');
+    return localStorage.getItem("OP_API_KEY");
   }
-  return ''
+  return "";
 }
 
 export enum AuthTypeEnum {
-  OAUTH = 'OAUTH',
-  APIKEY = 'APIKEY'
+  OAUTH = "OAUTH",
+  APIKEY = "APIKEY",
 }
 export interface EntityManagerConfig {
   baseUrl: string;
   authType: AuthTypeEnum;
   apiKeyOptions?: {
-    getApiKey?: () => string | undefined;
+    getApiKey: () => string | undefined | null;
   };
   oauthOptions?: Options & {
     oauthToken?: Token;
   };
+  /** default pageSize for getAll */
+  pageSize?: number;
 }
 
 export interface FetchRequest extends RequestInit {
   url: string;
 }
 
-
 export interface GetAllOptions {
   notify?: boolean;
   filters?: EntityFilterItem[];
-  sortBy?: Map<string, 'asc'|'desc'>;
+  sortBy?: Map<string, "asc" | "desc">;
   groupBy?: string;
   showSums?: boolean;
+  select?: string[];
   url?: string;
+  /** limit */
+  pageSize?: number;
 }
 export interface GetManyOptions extends GetAllOptions {
   all?: boolean;
   /** page */
   offset?: number;
-  /** limit */
-  pageSize?: number;
 }
 
 export class EntityManager {
   private OAuth;
   private config: EntityManagerConfig;
   private emitter: EventEmitter;
-  oauthToken: Token;
+  oauthToken?: Token;
 
-  public static instance: EntityManager
+  public static instance: EntityManager;
 
   constructor(config?: Partial<EntityManagerConfig>) {
     this.emitter = new EventEmitter();
@@ -75,9 +79,10 @@ export class EntityManager {
 
   public useConfig(config?: Partial<EntityManagerConfig>): this {
     this.config = {
-      baseUrl: 'http://localhost',
+      baseUrl: "http://localhost",
       authType: AuthTypeEnum.APIKEY,
-      ...config,     
+      pageSize: 100,
+      ...config,
       apiKeyOptions: {
         getApiKey: getApiKeyFromLocalStorage,
         ...config?.apiKeyOptions,
@@ -86,7 +91,7 @@ export class EntityManager {
     this.config.oauthOptions = {
       accessTokenUri: `${this.config.baseUrl}/oauth/token`,
       ...config?.oauthOptions,
-    }
+    };
 
     const fullOauthOptions: Options = this.config?.oauthOptions;
     if (!fullOauthOptions.clientSecret) {
@@ -114,7 +119,8 @@ export class EntityManager {
     }
 
     // собираем url
-    url = this.config.baseUrl + (url.toString().startsWith("/") ? "" : "/") + url;
+    url =
+      this.config.baseUrl + (url.toString().startsWith("/") ? "" : "/") + url;
 
     if (this.config.authType === "OAUTH") {
       // получаем токен из ОП
@@ -131,14 +137,16 @@ export class EntityManager {
             this.oauthToken = await this.OAuth.code.getToken(
               window.location.search
             );
-            localStorage.setItem(
-              "OP_OAUTH_ACCESS_TOKEN",
-              this.oauthToken.accessToken
-            );
-            localStorage.setItem(
-              "OP_OAUTH_REFRESH_TOKEN",
-              this.oauthToken.refreshToken
-            );
+            if (this.oauthToken) {
+              localStorage.setItem(
+                "OP_OAUTH_ACCESS_TOKEN",
+                this.oauthToken.accessToken
+              );
+              localStorage.setItem(
+                "OP_OAUTH_REFRESH_TOKEN",
+                this.oauthToken.refreshToken
+              );
+            }
 
             // const url = new URL (window.location.href)
             // url.searchParams.delete('code');
@@ -152,13 +160,13 @@ export class EntityManager {
       }
 
       // подписываем опции запроса заголовком Authorization
-      const signedOptions = this.oauthToken.sign({
+      const signedOptions = this.oauthToken?.sign({
         url,
         ...requestInit,
       } as any);
       requestInit.headers = signedOptions.headers;
     } else {
-      const apikey = this.config.apiKeyOptions.getApiKey();
+      const apikey = this.config.apiKeyOptions?.getApiKey();
       requestInit.headers["Authorization"] =
         "Basic " + base64Encode("apikey:" + apikey);
     }
@@ -212,7 +220,7 @@ export class EntityManager {
   }
 
   async refresh<T extends BaseEntity>(entity: T): Promise<T> {
-    const body = await this.fetch(entity.self.href);
+    const body = await this.fetch(entity.self.href || "");
     entity.merge(body);
     entity._links = {};
     return entity;
@@ -221,22 +229,21 @@ export class EntityManager {
   async getMany<T extends BaseEntity>(
     T,
     options: GetManyOptions = {}
-  ): Promise<Array<T>> {
-    const result = [];
+  ): Promise<EntityCollectionElement<T>[]> {
+    const result: EntityCollectionElement<T>[] = [];
     let total;
     for (
       let startOffset = options.offset || 1, offset = startOffset;
-      offset === startOffset || (options.all && result.length < total);
+      offset === startOffset || (options.all && result.length < total); // TODO parallel requests for getAll ?
       offset++
     ) {
       const query = Object.entries({ ...options, offset })
         .map(([key, value]) => {
-
           if (key === "filters") {
             value = JSON.stringify(value);
-          } else if (key === 'sortBy'){
-            value = JSON.stringify([...(value as GetAllOptions['sortBy'])])
-          } 
+          } else if (key === "sortBy" && value !== undefined) {           
+            value = JSON.stringify([...(value as NonNullable<GetAllOptions["sortBy"]>)]);
+          }
           return key + "=" + value;
         })
         .join("&");
@@ -254,8 +261,12 @@ export class EntityManager {
   async getAll<T extends BaseEntity>(
     T,
     options: GetAllOptions = {}
-  ): Promise<Array<T>> {
-    return await this.getMany<T>(T, { ...options, all: true });
+  ): Promise<Array<EntityCollectionElement<T>>> {
+    return await this.getMany<T>(T, {
+      pageSize: this.config.pageSize,
+      ...options,
+      all: true,
+    });
   }
 
   async patch<T extends BaseEntity>(
@@ -280,7 +291,7 @@ export class EntityManager {
       }
     }
 
-    const url = new URL(entity.self.href);
+    const url = new URL(entity.self.href || "");
     if (notify !== undefined)
       url.searchParams.append("notify", JSON.stringify(notify));
 
@@ -302,8 +313,10 @@ export class EntityManager {
         .map((fieldPaths) => fieldPaths.substr(7))
         .forEach(
           (fieldName) =>
-            (entity.body._embedded[fieldName] =
-              patchedBody._embedded[fieldName])
+            (entity.body._embedded = Object.assign(
+              entity.body._embedded || {},
+              { [fieldName]: patchedBody._embedded[fieldName] }
+            ))
         );
     }
     return entity;
@@ -327,8 +340,8 @@ export class EntityManager {
 
   public async first<T extends BaseEntity>(
     T: any,
-    filters: EntityFilterItem[]
-  ): Promise<T | null> {
+    filters?: EntityFilterItem[]
+  ): Promise<EntityCollectionElement<T> | null> {
     const result = await this.getMany<T>(T, {
       pageSize: 1,
       filters,
@@ -348,7 +361,7 @@ export class EntityManager {
     T: any,
     key: keyof T["body"] | string,
     value: any
-  ): Promise<T | null> {
+  ): Promise<EntityCollectionElement<T> | null> {
     // filter[UserExtend.fieldExternalId()] = { operator: '=', values: [id] }
     const filter = {
       [key]: { operator: "=" as FilterOperatorType, values: [value] },
@@ -387,6 +400,6 @@ var entityManager = new EntityManager();
 
 entityManager.onBeforeRequest(jsonLogRequestToConsole);
 
-EntityManager.instance = entityManager
+EntityManager.instance = entityManager;
 
 export default entityManager;

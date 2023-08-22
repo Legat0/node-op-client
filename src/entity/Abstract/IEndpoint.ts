@@ -1,5 +1,5 @@
 export interface IEndpoint {
-  href: string,
+  href: string | null,
   method?: "GET" | "POST" | "PATCH" | "DELETE",
   title?: string,
   type?: string,

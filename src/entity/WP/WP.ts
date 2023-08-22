@@ -1,6 +1,6 @@
 import { IEndpoint } from "../Abstract/IEndpoint";
 import IWPBody from "./IWPBody";
-import BaseEntity, { IPartialAbstractBody } from "../Abstract/BaseEntity";
+import BaseEntity, { IPartialAbstractBody, LinkEntity } from "../Abstract/BaseEntity";
 import Status from "../Status/Status";
 import Type from "../Type/Type";
 import User from "../User/User";
@@ -14,6 +14,7 @@ import Embedded from "../decorators/Embedded";
 export interface IPartialWPBody extends Partial<Omit<IWPBody, "_links">> {
   _links?: Partial<IWPBody["_links"]>;
 }
+
 
 /**
  * Work package
@@ -51,35 +52,34 @@ export default class WP extends BaseEntity {
   derivedEstimatedTime: Duration;
 
   @Link("project", Project)
-  project: Project;
+  project: LinkEntity<Project>;
   @Embedded("project", Project)
-  embeddedProject: Project;
+  embeddedProject?: Project;
 
   @Link("status", Status)
-  status: Status;
+  status: LinkEntity<Status>;
   @Embedded("status", Status)
-  embeddedStatus: Status;
+  embeddedStatus?: Status;
 
   @Link("type", Type)
-  type: Type;
+  type: LinkEntity<Type>;
   @Embedded("type", Type)
-  embeddedType: Type;
-
-  @Link("customField1", CustomOption)
-  module: CustomOption;
+  embeddedType?: Type;
 
   @Link("assignee", User)
-  assignee: User;
+  assignee: LinkEntity<User> | null
+  @Embedded("assignee", User)
+  embeddedAssignee?: User | null;
 
   @Link("author", User)
-  author: User;
+  author: LinkEntity<User>;
 
   @Link("parent", WP)
-  parent: WP;
+  parent: LinkEntity<WP> | null;
 
   body: IWPBody;
 
-  get ancestor(): WP {
+  get ancestor(): WP | null | undefined {
     if (!this.body._links.ancestors) {
       return undefined;
     }
@@ -91,7 +91,7 @@ export default class WP extends BaseEntity {
     return null;
   }
 
-  get children(): WP[] {
+  get children(): WP[] | undefined{
     if (!this.body._links.children) {
       return undefined;
     }

@@ -1,5 +1,6 @@
 import entityManager, {EntityManager ,EntityManagerConfig, AuthTypeEnum} from "./EntityManager/EntityManager";
-import BaseEntity from "./entity/Abstract/BaseEntity";
+import BaseEntity, {LinkEntity, EntityCollectionElement} from "./entity/Abstract/BaseEntity";
+
 import Duration from "./entity/Abstract/Duration";
 import EntityRequestBuilder from "./entity/Abstract/EntityRequestBuilder";
 import CustomOption from "./entity/CustomOption/CustomOption";
@@ -13,6 +14,8 @@ import WP from "./entity/WP/WP";
 import Field from "./entity/decorators/Field";
 import Link from "./entity/decorators/Link";
 import Embedded from "./entity/decorators/Embedded";
+import JsonField from "./entity/decorators/JsonField";
+import LinkArray from "./entity/decorators/LinkArray";
 import StatusEnum from "./entity/Status/StatusEnum";
 import { EntityFilterItem } from "contracts/EntityFilterItem";
 
@@ -20,7 +23,7 @@ export {
   EntityManager,
   EntityManagerConfig,
   AuthTypeEnum,
-  BaseEntity,
+  BaseEntity, LinkEntity, EntityCollectionElement,
   EntityRequestBuilder,
   CustomOption,
   Project,
@@ -32,6 +35,8 @@ export {
   Link,
   Field,
   Embedded,
+  JsonField,
+  LinkArray,
   Duration,
   User,  
 
