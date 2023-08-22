@@ -46,6 +46,7 @@ export default class EntityRequestBuilder<T extends BaseEntity> {
     operator: EntityFieldFilter["operator"],
     values: EntityFieldFilter["values"]
   ): this {
+    key = this.mapField?.[String(key)] || key
     const filter: EntityFilterItem = { [key]: { operator, values } };
     if (!this.requstParams.filters) this.requstParams.filters = [];
     this.requstParams.filters.push(filter);
@@ -104,6 +105,8 @@ export default class EntityRequestBuilder<T extends BaseEntity> {
   public sortBy(column: string, direction: "asc" | "desc" = "asc"): this {
     if (this.requstParams.sortBy === undefined)
       this.requstParams.sortBy = new Map();
+      
+    column = this.mapField?.[String(column)] || column
     this.requstParams.sortBy.set(column, direction);
     return this;
   }

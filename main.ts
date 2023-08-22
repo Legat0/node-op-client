@@ -80,8 +80,11 @@ EntityManager.instance.useConfig({
 
   const wp = await WPExt.findOrFail(2421);
   wp.useMapField(p.fieldMap);
-  wp.assignee;
+
+  
   console.log(p.fieldMap);
+  
+  console.table(wp.linkMarks.map( x => x.id));
   console.table(wp.marks);
   console.table(wp.contact);
   console.log(wp.stage_date_finish, wp.task_date_finish);
@@ -98,9 +101,10 @@ EntityManager.instance.useConfig({
   // const map = new Map([['id', 'asc']])
 
   const wpList = await WP.request(undefined, p.fieldMap)
-    //  .useMapField(p.fieldMap)
-    .addFilter("project", "=", 2)
-    .addFilter("status", "=", [1])
+    .useMapField(p.fieldMap)
+    .addFilter("project", "=", 9)
+    // .addFilter("status", "=", [1])
+    .addFilter("external_id", "=", ["МТ-429"])
     .sortBy("id", "desc")
     .pageSize(10)
     .offset(1)
