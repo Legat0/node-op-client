@@ -1,11 +1,9 @@
 import Field from "../decorators/Field";
-import BaseEntity, { IPartialAbstractBody } from "../Abstract/BaseEntity";
+import BaseEntity, { IPartialAbstractBody, LinkEntity } from "../Abstract/BaseEntity";
 import IProjectBody from "./IProjectBody";
+import Link from "../decorators/Link";
 
-export interface IPartialProjectBody
-  extends Partial<Omit<IProjectBody, "_links">> {
-  _links?: Partial<IProjectBody["_links"]>;
-}
+
 export default class Project extends BaseEntity {
   // ['constructor']: typeof Project
 
@@ -28,6 +26,9 @@ export default class Project extends BaseEntity {
 
   @Field("status", String)
   status: string;
+
+  @Link("parent", Project)
+  parent: LinkEntity<Project> | null;
 
   body: IProjectBody;
 }

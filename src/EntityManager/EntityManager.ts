@@ -107,6 +107,12 @@ export class EntityManager {
     this.emitter.addListener(this.onBeforeRequest.name, listener);
   }
 
+  public makeUrl(path: string | URL): string {
+    return (
+      this.config.baseUrl + (path.toString().startsWith("/") ? "" : "/") + path
+    );
+  }
+
   async fetch(url: string | URL, options?: IFetchInit) {
     const requestInit = {
       headers: {},
@@ -119,8 +125,7 @@ export class EntityManager {
     }
 
     // собираем url
-    url =
-      this.config.baseUrl + (url.toString().startsWith("/") ? "" : "/") + url;
+    url = this.makeUrl(url);
 
     if (this.config.authType === "OAUTH") {
       // получаем токен из ОП
@@ -241,8 +246,10 @@ export class EntityManager {
         .map(([key, value]) => {
           if (key === "filters") {
             value = JSON.stringify(value);
-          } else if (key === "sortBy" && value !== undefined) {           
-            value = JSON.stringify([...(value as NonNullable<GetAllOptions["sortBy"]>)]);
+          } else if (key === "sortBy" && value !== undefined) {
+            value = JSON.stringify([
+              ...(value as NonNullable<GetAllOptions["sortBy"]>),
+            ]);
           }
           return key + "=" + value;
         })

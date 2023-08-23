@@ -14,6 +14,10 @@ import {
 } from "contracts/EntityFilterItem";
 import { FilterOperatorType } from "contracts/FilterOperatorEnum";
 import EntityRequestBuilder from "./EntityRequestBuilder";
+import date2str from "../utils/date2str";
+import Duration from "./Duration";
+import str2date from "../utils/str2date";
+import User from "entity/User/User";
 
 export interface IPartialAbstractBody extends Partial<IAbstractBody> {}
 
@@ -21,7 +25,11 @@ export interface IPartialAbstractBody extends Partial<IAbstractBody> {}
 //   _links?: Partial<IAbstractBody["_links"]>;
 // }
 
-export type LinkEntity<T extends BaseEntity> = Pick<T, "id" | "self" | 'parseSelf'>;
+export type LinkEntity<T extends BaseEntity> = Pick<
+  T,
+  "id" | "self" | "parseSelf" | "makeUrl"
+> &
+  (T extends User ? Pick<User, 'avatarUrl'> : {});
 
 // export type OmitEmbedded<T> = {
 //   [K in keyof T as K extends `embedded${string}` ? never : K]: T[K];
@@ -36,7 +44,7 @@ export type EntityCollectionElement<T extends BaseEntity> = {
   // [K in keyof T as K extends EmbeddedFieldName ? never : K]: T[K];
 };
 
-export type MapFieldType =  Record<string | 'marks', string | undefined>
+export type MapFieldType = Record<string | "marks", string | undefined>;
 
 export default abstract class BaseEntity {
   ["constructor"]: typeof BaseEntity;
@@ -47,13 +55,20 @@ export default abstract class BaseEntity {
   public $dirty: string[] = [];
 
   /** Маппинг доп полей. alias => real name */
-  private $mapField?: MapFieldType
+  private $mapField?: MapFieldType;
 
   body: IAbstractBody;
   /**
    * Holds linked objects matched the body._links.
    */
-  _links: { [key: string]: BaseEntity | LinkEntity<BaseEntity> | BaseEntity[] | LinkEntity<BaseEntity>[] | null };
+  _links: {
+    [key: string]:
+      | BaseEntity
+      | LinkEntity<BaseEntity>
+      | BaseEntity[]
+      | LinkEntity<BaseEntity>[]
+      | null;
+  };
 
   private $service?: EntityManager;
 
@@ -81,6 +96,7 @@ export default abstract class BaseEntity {
         }
       }
     }
+    this.$service = EntityManager.instance;
   }
 
   public useService(service?: EntityManager): this {
@@ -94,13 +110,13 @@ export default abstract class BaseEntity {
     return this.$service;
   }
 
-  public useMapField(map: MapFieldType){
-    this.$mapField = map
-    return this
+  public useMapField(map: MapFieldType) {
+    this.$mapField = map;
+    return this;
   }
 
-  public getFieldName(alias: string) : string {
-    return this.$mapField?.[alias] || alias
+  public getFieldName(alias: string): string {
+    return this.$mapField?.[alias] || alias;
   }
 
   public static request<T extends BaseEntity>(
@@ -132,8 +148,10 @@ export default abstract class BaseEntity {
   }
 
   set self(value) {
-    this.body._links.self = value;    
-    this.body.id = value.href ? Number.parseInt(value.href.match(/\d+$/)?.[0] || '') : 0;
+    this.body._links.self = value;
+    this.body.id = value.href
+      ? Number.parseInt(value.href.match(/\d+$/)?.[0] || "")
+      : 0;
   }
 
   get bodyCustomFields() {
@@ -170,14 +188,17 @@ export default abstract class BaseEntity {
   public getLinkArray<T extends BaseEntity>(
     key: string,
     type: { new (...args: any[]): T }
-  ): LinkEntity<T>[] | undefined{
+  ): LinkEntity<T>[] | undefined {
+    key = this.getFieldName(key);
     if (this.body._links.hasOwnProperty(key)) {
       const linkSelf = this.body._links[key];
       if (this._links[key] !== undefined && Array.isArray(this._links[key]))
         return this._links[key] as LinkEntity<T>[];
 
       if (Array.isArray(linkSelf)) {
-        return (this._links[key] = linkSelf.map((x) => new type(x) as LinkEntity<T>));
+        return (this._links[key] = linkSelf.map(
+          (x) => new type(x) as LinkEntity<T>
+        ));
       } else {
         throw new Error("link value is not array");
       }
@@ -188,9 +209,11 @@ export default abstract class BaseEntity {
     key: string,
     type: { new (...args: any[]): T }
   ): LinkEntity<T> | null | undefined {
+    key = this.getFieldName(key);
     if (this.body._links.hasOwnProperty(key)) {
       const linkSelf = this.body._links[key];
-      if (this._links[key] !== undefined) return this._links[key] as LinkEntity<T>;
+      if (this._links[key] !== undefined)
+        return this._links[key] as LinkEntity<T>;
 
       if (linkSelf.href) {
         return (this._links[key] = new type(linkSelf) as LinkEntity<T>);
@@ -200,17 +223,65 @@ export default abstract class BaseEntity {
     }
   }
 
+  public static ConvertToType(value, type?: any) {
+    if (type === Date) {
+      return str2date(value);
+    } else if (type === Duration) {
+      return value ? Duration.parse(value) : null;
+    } else {
+      return value;
+    }
+  }
+
+  public getField<T>(
+    name: string,
+    type: { new (...args: any[]): T }
+  ): T | undefined {
+    name = this.getFieldName(name);
+    if (!name) return;
+    if (this.body.hasOwnProperty(name)) {
+      return BaseEntity.ConvertToType(this.body[name], type);
+    }
+  }
+
+  public getJsonField<T>(
+    name: string,
+    type?: { new (...args: any[]): T }
+  ): T | T[] | undefined {
+    name = this.getFieldName(name);
+    if (!name) return;
+
+    if (this.body.hasOwnProperty(name)) {
+      const value = this.body[name] ? JSON.parse(this.body[name]) : null;
+      if (type !== undefined) {
+        if (Array.isArray(value)) {
+          return value.map((x) => new type(x));
+        } else {
+          return new type(value);
+        }
+      } else {
+        return value;
+      }
+    }
+  }
+
   /** For json CustomOptions */
   public parseSelf<T extends object>(): T | undefined {
     try {
-      return this.self.title ? JSON.parse(this.self.title) as T : undefined;
+      return this.self.title ? (JSON.parse(this.self.title) as T) : undefined;
     } catch (error) {
-      return undefined
-    }    
+      return undefined;
+    }
   }
 
-  public get selfParsed() {
-    return this.parseSelf()
+  public get selfParsed(): object | undefined {
+    return this.parseSelf();
+  }
+
+  public makeUrl(path: string) {
+    return this.getService().makeUrl(
+      this.self.href + (path.toString().startsWith("/") ? "" : "/") + path
+    );
   }
 
   public async create<Entity extends this>(

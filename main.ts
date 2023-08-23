@@ -13,6 +13,7 @@ import {
   CustomOption,
   LinkEntity,
   LinkArray,
+  User,
 } from "./src";
 import * as _ from "lodash";
 
@@ -81,6 +82,7 @@ EntityManager.instance.useConfig({
   const wp = await WPExt.findOrFail(2421);
   wp.useMapField(p.fieldMap);
 
+
   
   console.log(p.fieldMap);
   
@@ -117,4 +119,7 @@ EntityManager.instance.useConfig({
       return { id: x.id, subject: x.subject, assignee: x.assignee };
     })
   );
+
+  const wp2 = await WP.findOrFail(2400)
+  console.table({id: wp.id, avatar: wp2.assignee?.makeUrl('avatar'), avatar2: wp2.assignee?.avatarUrl})
 })();
