@@ -1,7 +1,6 @@
 import fetch from "cross-fetch";
-import BaseEntity, {
-  EntityCollectionElement,
-} from "../entity/Abstract/BaseEntity";
+import BaseEntityAny, {EntityCollectionElement} from "../entity/Abstract/BaseEntityAny";
+import BaseEntity from "../entity/Abstract/BaseEntity";
 import { IEndpoint } from "../entity/Abstract/IEndpoint";
 import ClientOAuth2, { Options, Token } from "client-oauth2";
 import WP from "../entity/WP/WP";
@@ -216,9 +215,9 @@ export class EntityManager {
     return result;
   }
 
-  async get<T extends BaseEntity>(
+  async get<T extends BaseEntityAny>(
     T,
-    id: number | bigint | IEndpoint
+    id: number | string | bigint | IEndpoint
   ): Promise<T> {
     const result = new T(id);
     return this.refresh(result);
@@ -226,12 +225,12 @@ export class EntityManager {
 
   async refresh<T extends BaseEntity>(entity: T): Promise<T> {
     const body = await this.fetch(entity.self.href || "");
-    entity.merge(body);
+    entity.fill(body);
     entity._links = {};
     return entity;
   }
 
-  async getMany<T extends BaseEntity>(
+  async getMany<T extends BaseEntityAny>(
     T,
     options: GetManyOptions = {}
   ): Promise<EntityCollectionElement<T>[]> {
@@ -265,7 +264,7 @@ export class EntityManager {
     return result;
   }
 
-  async getAll<T extends BaseEntity>(
+  async getAll<T extends BaseEntityAny>(
     T,
     options: GetAllOptions = {}
   ): Promise<Array<EntityCollectionElement<T>>> {
@@ -344,7 +343,7 @@ export class EntityManager {
     entity.body = createdBody;
     return entity;
   }
-
+ 
   public async first<T extends BaseEntity>(
     T: any,
     filters?: EntityFilterItem[]
@@ -357,9 +356,9 @@ export class EntityManager {
     return result.length > 0 ? result[0] : null;
   }
 
-  public async findOrFail<T extends BaseEntity>(
+  public async findOrFail<T extends BaseEntityAny>(
     T: any,
-    id: number | bigint | IEndpoint
+    id: number | string | bigint | IEndpoint
   ): Promise<T> {
     return this.get(T, id);
   }

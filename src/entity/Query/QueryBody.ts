@@ -2,7 +2,7 @@ import { IEndpoint } from "../Abstract/IEndpoint";
 import { IPayloadEndpoint } from "../Abstract/IPayloadEndpoint";
 import IAbstractBody from "../Abstract/IAbstractBody";
 
-export default interface IQueryFormBody extends IAbstractBody {
+export default interface QueryBody extends IAbstractBody {
   _type?: "Form";
   _embedded: {
     payload: {

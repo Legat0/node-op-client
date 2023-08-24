@@ -1,6 +1,7 @@
 import { IEndpoint } from "../Abstract/IEndpoint";
 import IWPBody from "./IWPBody";
-import BaseEntity, { IPartialAbstractBody, LinkEntity } from "../Abstract/BaseEntity";
+import  BaseEntity from "../Abstract/BaseEntity";
+import  { IPartialAbstractBody, LinkEntity } from "../Abstract/BaseEntityAny";
 import Status from "../Status/Status";
 import Type from "../Type/Type";
 import User from "../User/User";

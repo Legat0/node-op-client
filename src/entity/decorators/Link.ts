@@ -1,15 +1,15 @@
-import BaseEntity from "../Abstract/BaseEntity";
+import BaseEntityAny from "../Abstract/BaseEntityAny";
 import str2date from "../utils/str2date";
 import date2str from "../utils/date2str";
 import { NullLink } from "../Abstract/IEndpoint";
 
 export default function Link(
   name: string,
-  type: new (...args: any[]) => BaseEntity
+  type: new (...args: any[]) => BaseEntityAny
 ) {
-  return function (target: BaseEntity, propertyKey: string | symbol): void {   
+  return function (target: BaseEntityAny, propertyKey: string | symbol): void {   
 
-    function getter(): BaseEntity | undefined | null {
+    function getter(): BaseEntityAny | undefined | null {
       name = this.getFieldName(name)
       if (!name) return
 
@@ -25,7 +25,7 @@ export default function Link(
       }
     }
 
-    function setter(value: BaseEntity) {
+    function setter(value: BaseEntityAny) {
       name = this.getFieldName(name)
       if (!name) return
 

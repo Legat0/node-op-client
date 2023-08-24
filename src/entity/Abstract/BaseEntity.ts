@@ -1,5 +1,5 @@
 import { IEndpoint } from "./IEndpoint";
-import IAbstractBody from "./IAbstractBody";
+import IAbstractBody, { ISchemaBody } from "./IAbstractBody";
 import set from "keypather/set";
 import get from "keypather/get";
 import IWPBody from "../WP/IWPBody";
@@ -18,97 +18,18 @@ import date2str from "../utils/date2str";
 import Duration from "./Duration";
 import str2date from "../utils/str2date";
 import User from "entity/User/User";
-
-export interface IPartialAbstractBody extends Partial<IAbstractBody> {}
-
-// interface IPartialAbstractBody extends Partial<Omit<IWPBody, "_links">> {
-//   _links?: Partial<IAbstractBody["_links"]>;
-// }
-
-export type LinkEntity<T extends BaseEntity> = Pick<
-  T,
-  "id" | "self" | "parseSelf" | "makeUrl"
-> &
-  (T extends User ? Pick<User, 'avatarUrl'> : {});
-
-// export type OmitEmbedded<T> = {
-//   [K in keyof T as K extends `embedded${string}` ? never : K]: T[K];
-// };
-
-export type EmbeddedFieldName = `embedded${string}`;
-
-export type EntityCollectionElement<T extends BaseEntity> = {
-  [Filtered in {
-    [K in keyof T]: K extends EmbeddedFieldName ? never : K;
-  }[keyof T]]: T[Filtered];
-  // [K in keyof T as K extends EmbeddedFieldName ? never : K]: T[K];
-};
+import BaseEntityAny, { EntityCollectionElement } from "./BaseEntityAny";
 
 export type MapFieldType = Record<string | "marks", string | undefined>;
 
-export default abstract class BaseEntity {
-  ["constructor"]: typeof BaseEntity;
+type StringOrInteger = string | number;
 
-  static url: string = "/should_be_defined";
-
+export default abstract class BaseEntity extends BaseEntityAny<number> {
   /** Массив измененных полей */
   public $dirty: string[] = [];
 
   /** Маппинг доп полей. alias => real name */
   private $mapField?: MapFieldType;
-
-  body: IAbstractBody;
-  /**
-   * Holds linked objects matched the body._links.
-   */
-  _links: {
-    [key: string]:
-      | BaseEntity
-      | LinkEntity<BaseEntity>
-      | BaseEntity[]
-      | LinkEntity<BaseEntity>[]
-      | null;
-  };
-
-  private $service?: EntityManager;
-
-  constructor(init?: number | bigint | IEndpoint | IPartialAbstractBody) {
-    this.body = {
-      id: 0,
-      _links: {
-        self: { href: null },
-      },
-      _embedded: {},
-    };
-    this._links = {};
-    if (init !== undefined) {
-      if (typeof init === "number" || typeof init === "bigint") {
-        this.id = Number(init);
-      } else if (typeof init === "object" && init.hasOwnProperty("href")) {
-        this.self = init as IEndpoint;
-      } else {
-        this.merge(init);
-        if (this.id && !this.self) {
-          this.id = this.id;
-        }
-        if (this.self && !this.id) {
-          this.self = this.self;
-        }
-      }
-    }
-    this.$service = EntityManager.instance;
-  }
-
-  public useService(service?: EntityManager): this {
-    if (service) this.$service = service;
-    return this;
-  }
-
-  public getService(): EntityManager {
-    if (!this.$service) throw new Error("service is undefined");
-
-    return this.$service;
-  }
 
   public useMapField(map: MapFieldType) {
     this.$mapField = map;
@@ -127,161 +48,23 @@ export default abstract class BaseEntity {
     return new EntityRequestBuilder<T>(this, options, undefined, map);
   }
 
-  get id(): number {
-    return this.body.id;
+  public static async findBy<T extends BaseEntity>(
+    this: { new (): T },
+    key: keyof T["body"] | string,
+    value: any
+  ): Promise<EntityCollectionElement<T> | null> {
+    const filter = {
+      [key]: { operator: "=" as FilterOperatorType, values: [value] },
+    };
+
+    return await EntityManager.instance.first<T>(this, [filter]);
   }
 
-  set id(id: number) {
-    this.body.id = id;
-    this.body._links.self = this.body._links.self || { href: undefined };
-    this.body._links.self.href = this.constructor.url + "/" + id;
-    this.body._links.self.title = undefined;
-  }
-
-  merge(source) {
-    const copy = JSON.parse(JSON.stringify(source)) as IAbstractBody;
-    Object.assign(this.body, copy);
-  }
-
-  get self() {
-    return this.body._links.self;
-  }
-
-  set self(value) {
-    this.body._links.self = value;
-    this.body.id = value.href
-      ? Number.parseInt(value.href.match(/\d+$/)?.[0] || "")
-      : 0;
-  }
-
-  get bodyCustomFields() {
-    const map = new Map<string, any>();
-    for (const key in this.body) {
-      if (key.includes("customField")) {
-        map.set(key, this.body[key]);
-      }
-    }
-    return map;
-  }
-
-  get linkCustomFields() {
-    const map = new Map<string, any>();
-    for (const key in this.body._links) {
-      if (key.includes("customField")) {
-        map.set(key, this.body._links[key]);
-      }
-    }
-    return map;
-  }
-
-  bodyScope(
-    fieldPaths: Array<string | number | Symbol>
-  ): Partial<IAbstractBody> {
-    const result: Partial<IAbstractBody> = {};
-    fieldPaths.forEach((eachFieldPath) => {
-      const eachFieldValue = get(this.body, eachFieldPath);
-      set(result, eachFieldPath, eachFieldValue);
-    });
-    return result;
-  }
-
-  public getLinkArray<T extends BaseEntity>(
-    key: string,
-    type: { new (...args: any[]): T }
-  ): LinkEntity<T>[] | undefined {
-    key = this.getFieldName(key);
-    if (this.body._links.hasOwnProperty(key)) {
-      const linkSelf = this.body._links[key];
-      if (this._links[key] !== undefined && Array.isArray(this._links[key]))
-        return this._links[key] as LinkEntity<T>[];
-
-      if (Array.isArray(linkSelf)) {
-        return (this._links[key] = linkSelf.map(
-          (x) => new type(x) as LinkEntity<T>
-        ));
-      } else {
-        throw new Error("link value is not array");
-      }
-    }
-  }
-
-  public getLink<T extends BaseEntity>(
-    key: string,
-    type: { new (...args: any[]): T }
-  ): LinkEntity<T> | null | undefined {
-    key = this.getFieldName(key);
-    if (this.body._links.hasOwnProperty(key)) {
-      const linkSelf = this.body._links[key];
-      if (this._links[key] !== undefined)
-        return this._links[key] as LinkEntity<T>;
-
-      if (linkSelf.href) {
-        return (this._links[key] = new type(linkSelf) as LinkEntity<T>);
-      } else {
-        return (this._links[key] = null);
-      }
-    }
-  }
-
-  public static ConvertToType(value, type?: any) {
-    if (type === Date) {
-      return str2date(value);
-    } else if (type === Duration) {
-      return value ? Duration.parse(value) : null;
-    } else {
-      return value;
-    }
-  }
-
-  public getField<T>(
-    name: string,
-    type: { new (...args: any[]): T }
-  ): T | undefined {
-    name = this.getFieldName(name);
-    if (!name) return;
-    if (this.body.hasOwnProperty(name)) {
-      return BaseEntity.ConvertToType(this.body[name], type);
-    }
-  }
-
-  public getJsonField<T>(
-    name: string,
-    type?: { new (...args: any[]): T }
-  ): T | T[] | undefined {
-    name = this.getFieldName(name);
-    if (!name) return;
-
-    if (this.body.hasOwnProperty(name)) {
-      const value = this.body[name] ? JSON.parse(this.body[name]) : null;
-      if (type !== undefined) {
-        if (Array.isArray(value)) {
-          return value.map((x) => new type(x));
-        } else {
-          return new type(value);
-        }
-      } else {
-        return value;
-      }
-    }
-  }
-
-  /** For json CustomOptions */
-  public parseSelf<T extends object>(): T | undefined {
-    try {
-      return this.self.title ? (JSON.parse(this.self.title) as T) : undefined;
-    } catch (error) {
-      return undefined;
-    }
-  }
-
-  public get selfParsed(): object | undefined {
-    return this.parseSelf();
-  }
-
-  public makeUrl(path: string) {
-    return this.getService().makeUrl(
-      this.self.href + (path.toString().startsWith("/") ? "" : "/") + path
-    );
+  public static async first<T extends BaseEntity>(
+    this: { new (): T },
+    filters?: EntityFilterItem[]
+  ) {
+    return await EntityManager.instance.first<T>(this, filters);
   }
 
   public async create<Entity extends this>(
@@ -319,45 +102,5 @@ export default abstract class BaseEntity {
     } else {
       return this.create(options);
     }
-  }
-
-  public static async findOrFail<T extends BaseEntity>(
-    this: { new (): T },
-    id: number | bigint
-  ): Promise<T> {
-    return EntityManager.instance.findOrFail<T>(this, id);
-  }
-
-  public static async first<T extends BaseEntity>(
-    this: { new (): T },
-    filters?: EntityFilterItem[]
-  ) {
-    return await EntityManager.instance.first<T>(this, filters);
-  }
-
-  public static async findBy<T extends BaseEntity>(
-    this: { new (): T },
-    key: keyof T["body"] | string,
-    value: any
-  ): Promise<EntityCollectionElement<T> | null> {
-    const filter = {
-      [key]: { operator: "=" as FilterOperatorType, values: [value] },
-    };
-
-    return await EntityManager.instance.first<T>(this, [filter]);
-  }
-
-  public static async getAll<T extends BaseEntity>(
-    this: { new (): T },
-    options?: GetAllOptions
-  ) {
-    return await EntityManager.instance.getAll<T>(this, options);
-  }
-
-  public static async getMany<T extends BaseEntity>(
-    this: { new (): T },
-    options?: GetManyOptions
-  ) {
-    return await EntityManager.instance.getMany<T>(this, options);
   }
 }

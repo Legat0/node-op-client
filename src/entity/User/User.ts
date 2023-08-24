@@ -9,7 +9,7 @@ export enum UserStatusEnum {
   invited = "invited",
 }
 export default class User extends BaseEntity {
-  ["constructor"]: typeof User;
+  // ["constructor"]: typeof User;
 
   static url = "/api/v3/users";
 

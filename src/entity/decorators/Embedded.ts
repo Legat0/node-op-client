@@ -1,13 +1,13 @@
-import BaseEntity from "../Abstract/BaseEntity";
+import BaseEntityAny from "../Abstract/BaseEntityAny";
 import str2date from "../utils/str2date";
 import date2str from "../utils/date2str";
 
 export default function Embedded(
   name: string,
-  type: new (...args: any[]) => BaseEntity
+  type: new (...args: any[]) => BaseEntityAny
 ) {
-  return function (target: BaseEntity, propertyKey: string | symbol): void {
-    function getter(): BaseEntity | undefined {
+  return function (target: BaseEntityAny, propertyKey: string | symbol): void {
+    function getter(): BaseEntityAny | undefined {
       name = this.getFieldName(name);
       if (!name) return
       if (this.body._embedded.hasOwnProperty(name)) {
@@ -15,7 +15,7 @@ export default function Embedded(
       }
     }
 
-    function setter(value: BaseEntity) {
+    function setter(value: BaseEntityAny) {
       name = this.getFieldName(name);
       if (!name) return
       this.body._embedded[name] = value.body;

@@ -1,8 +1,9 @@
 import Field from "../decorators/Field";
-import BaseEntity, { IPartialAbstractBody, LinkEntity } from "../Abstract/BaseEntity";
+import { IPartialAbstractBody, LinkEntity } from "../Abstract/BaseEntityAny";
+import BaseEntity from "../Abstract/BaseEntity";
 import IProjectBody from "./IProjectBody";
 import Link from "../decorators/Link";
-
+import QueryFilterInstanceSchema from "../Query/QueryFilterInstanceSchema";
 
 export default class Project extends BaseEntity {
   // ['constructor']: typeof Project
@@ -29,6 +30,12 @@ export default class Project extends BaseEntity {
 
   @Link("parent", Project)
   parent: LinkEntity<Project> | null;
+
+  filterInstanceSchemas() {
+    return QueryFilterInstanceSchema.getAll({
+      url:  `${this.self.href}/queries/filter_instance_schemas`,
+    });
+  }
 
   body: IProjectBody;
 }

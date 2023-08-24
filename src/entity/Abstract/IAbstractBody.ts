@@ -1,11 +1,14 @@
-import {IEndpoint} from "./IEndpoint";
+import { IEndpoint } from "./IEndpoint";
 
-export default interface IAbstractBody {
-  _type?: string,
-  "id": number,
-  "_links": {
-    "self": IEndpoint,
-  }
-  "_embedded"?: {
-  }
+export interface ISchemaBody {
+  _type?: string;
+  _links: {
+    self: IEndpoint;
+  };
+}
+
+export default interface IAbstractBody<IdType extends number | string = number>
+  extends ISchemaBody {
+  id: IdType; 
+  _embedded?: {};
 }

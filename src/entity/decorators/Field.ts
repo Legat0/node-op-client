@@ -1,4 +1,4 @@
-import BaseEntity from "../Abstract/BaseEntity";
+import BaseEntityAny from "../Abstract/BaseEntityAny";
 import str2date from "../utils/str2date";
 import date2str from "../utils/date2str";
 import Duration from "../Abstract/Duration";
@@ -14,7 +14,7 @@ function castValue(value, type?: any) {
 }
 
 export default function Field(name: string, type?: any) {
-  return function (target: BaseEntity, propertyKey: string | symbol): void {
+  return function (target: BaseEntityAny, propertyKey: string | symbol): void {
     function getter() {      
       name = this.getFieldName(name);
       if (!name) return

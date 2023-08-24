@@ -1,5 +1,6 @@
 import entityManager, {EntityManager ,EntityManagerConfig, AuthTypeEnum} from "./EntityManager/EntityManager";
-import BaseEntity, {LinkEntity, EntityCollectionElement} from "./entity/Abstract/BaseEntity";
+import BaseEntityAny, {LinkEntity, EntityCollectionElement} from "./entity/Abstract/BaseEntityAny";
+import BaseEntity from "./entity/Abstract/BaseEntity";
 
 import Duration from "./entity/Abstract/Duration";
 import EntityRequestBuilder from "./entity/Abstract/EntityRequestBuilder";
@@ -10,6 +11,10 @@ import Type from "././entity/Type/Type";
 import TypeEnum from "././entity/Type/TypeEnum";
 import User from "./entity/User/User";
 import WP from "./entity/WP/WP";
+import Query from "./entity/Query/Query";
+import QueryForm from "./entity/Query/QueryForm";
+import QueryFilterInstanceSchema from "./entity/Query/QueryFilterInstanceSchema";
+
 
 import Field from "./entity/decorators/Field";
 import Link from "./entity/decorators/Link";
@@ -23,7 +28,8 @@ export {
   EntityManager,
   EntityManagerConfig,
   AuthTypeEnum,
-  BaseEntity, LinkEntity, EntityCollectionElement,
+  BaseEntityAny, LinkEntity, EntityCollectionElement,
+  BaseEntity,
   EntityRequestBuilder,
   CustomOption,
   Project,
@@ -32,6 +38,9 @@ export {
   Type,
   TypeEnum,
   WP,
+  Query,
+  QueryForm,
+  QueryFilterInstanceSchema,
   Link,
   Field,
   Embedded,

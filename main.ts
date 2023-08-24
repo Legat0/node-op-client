@@ -14,8 +14,10 @@ import {
   LinkEntity,
   LinkArray,
   User,
+  QueryFilterInstanceSchema,
+  Query,
 } from "./src";
-import * as _ from "lodash";
+import _ from "lodash";
 
 dotenv.config();
 
@@ -54,10 +56,12 @@ class WPExt extends WP {
   public doska_number?: Number;
 
   get marks(): Mark[] {
-    return this.linkMarks.map((x) => x.parseSelf<Mark>()).filter((x): x is Mark => !!x);
+    return this.linkMarks
+      .map((x) => x.parseSelf<Mark>())
+      .filter((x): x is Mark => !!x);
   }
 
-  get contact(): object | undefined  {
+  get contact(): object | undefined {
     return this.linkContact.parseSelf();
   }
 }
@@ -76,32 +80,27 @@ EntityManager.instance.useConfig({
   },
 });
 
-(async function main() {
+async function testProject() {
+  const p = await ProjectExt.findOrFail(9);
+  console.log(p.fieldMap);
+}
+
+async function testWP() {
   const p = await ProjectExt.findOrFail(9);
 
   const wp = await WPExt.findOrFail(2421);
   wp.useMapField(p.fieldMap);
 
-
-  
   console.log(p.fieldMap);
-  
-  console.table(wp.linkMarks.map( x => x.id));
+
+  console.table(wp.linkMarks.map((x) => x.id));
   console.table(wp.marks);
   console.table(wp.contact);
   console.log(wp.stage_date_finish, wp.task_date_finish);
-  // const list = await ProjectExt.getAll();
-  // console.table(list.map(x => {
-  //   return {id: x.id, name: x.name, externalId: x.externalId, map: x.fieldMap}
-  //  }));
+}
 
-  //  const statusList = await Status.getAll();
-  //  console.table(statusList.map(x => {
-  //   return {id: x.id, name: x.name, externalId: x.externalId}
-  //  }));
-
-  // const map = new Map([['id', 'asc']])
-
+async function testWPFilters() {
+  const p = await ProjectExt.findOrFail(9);
   const wpList = await WP.request(undefined, p.fieldMap)
     .useMapField(p.fieldMap)
     .addFilter("project", "=", 9)
@@ -112,14 +111,56 @@ EntityManager.instance.useConfig({
     .offset(1)
     .getMany();
 
-  // const wpList = await WP.getMany()
-
   console.table(
     wpList.map((x) => {
       return { id: x.id, subject: x.subject, assignee: x.assignee };
     })
   );
+}
 
-  const wp2 = await WP.findOrFail(2400)
-  console.table({id: wp.id, avatar: wp2.assignee?.makeUrl('avatar'), avatar2: wp2.assignee?.avatarUrl})
+async function testQueryForm() {
+  const p = await ProjectExt.findOrFail(9);
+  // const list = await QueryFilterInstanceSchema.getAll();
+  const q = new Query();
+  q.name = "default";
+  q.project = p;
+  const form = await Query.form(q);
+
+  const filterFields =
+    form.body._embedded.schema._embedded.filtersSchemas._embedded.elements.map(
+      (x) => {
+        const queryFilter = x.filter._embedded?.allowedValues?.[0];
+        return { id: queryFilter?.id, title: queryFilter?._links.self.title };
+      }
+    );
+
+  console.table(
+    form.visibleFilterSchemas.map((x) => {
+      return {
+        id: x.allowedFilterValue.id,
+        title: x.allowedFilterValue.self.title,
+        operators: x.availableOperators.map((x) => x.id).join("|"),
+      };
+    })
+  );
+  let schema = form.visibleFilterSchemas.find((x) => x.id === "customField15");
+  schema = schema?.resultingSchema("=");
+  console.log({
+    id: schema?.id,
+    values: schema?.values?.type,
+    allowedValues: schema?.allowedValues?.length,
+  });
+  schema = form.visibleFilterSchemas
+    .find((x) => x.id === "author")
+    ?.resultingSchema("=");
+  console.log({
+    id: schema?.id,
+    values: schema?.values?.type,
+    allowedValues: schema?.allowedValues?.length,
+  });
+  // _.pick(x, "allowedFilterValue.id", "allowedFilterValue.self.title")));
+}
+
+(async function main() {
+  await testQueryForm();
 })();

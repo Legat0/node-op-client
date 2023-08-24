@@ -1,12 +1,12 @@
-import BaseEntity from "../Abstract/BaseEntity";
+import BaseEntityAny from "../Abstract/BaseEntityAny";
 
 export default function LinkArray(
   /** real name or alias */
   name: string,
-  type: new (...args: any[]) => BaseEntity
+  type: new (...args: any[]) => BaseEntityAny
 ) {
-  return function (target: BaseEntity, propertyKey: string | symbol): void {
-    function getter(): BaseEntity[] | undefined | null {
+  return function (target: BaseEntityAny, propertyKey: string | symbol): void {
+    function getter(): BaseEntityAny[] | undefined | null {
       name = this.getFieldName(name);
       if (!name) return
 
@@ -22,7 +22,7 @@ export default function LinkArray(
       }
     }
 
-    function setter(value: BaseEntity[]) {
+    function setter(value: BaseEntityAny[]) {
       name = this.getFieldName(name);
       if (!name) return
 
