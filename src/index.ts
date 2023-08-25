@@ -22,7 +22,7 @@ import Embedded from "./entity/decorators/Embedded";
 import JsonField from "./entity/decorators/JsonField";
 import LinkArray from "./entity/decorators/LinkArray";
 import StatusEnum from "./entity/Status/StatusEnum";
-import { EntityFilterItem } from "contracts/EntityFilterItem";
+import { EntityFilterItem } from "./contracts/EntityFilterItem";
 
 export {
   EntityManager,

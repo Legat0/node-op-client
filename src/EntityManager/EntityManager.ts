@@ -5,8 +5,8 @@ import { IEndpoint } from "../entity/Abstract/IEndpoint";
 import ClientOAuth2, { Options, Token } from "client-oauth2";
 import WP from "../entity/WP/WP";
 import EventEmitter from "events";
-import { EntityFilterItem } from "contracts/EntityFilterItem";
-import { FilterOperatorType } from "contracts/FilterOperatorEnum";
+import { EntityFilterItem } from "../contracts/EntityFilterItem";
+import { FilterOperatorType } from "../contracts/FilterOperatorEnum";
 
 interface IFetchInit extends Omit<RequestInit, "body"> {
   body?: BodyInit | object;

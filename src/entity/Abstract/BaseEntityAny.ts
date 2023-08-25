@@ -1,20 +1,12 @@
 import { IEndpoint } from "./IEndpoint";
-import IAbstractBody, { ISchemaBody } from "./IAbstractBody";
+import IAbstractBody from "./IAbstractBody";
 import set from "keypather/set";
 import get from "keypather/get";
-import IWPBody from "../WP/IWPBody";
 import {
   EntityManager,
   GetAllOptions,
   GetManyOptions,
 } from "../../EntityManager/EntityManager";
-import {
-  EntityFieldFilter,
-  EntityFilterItem,
-} from "contracts/EntityFilterItem";
-import { FilterOperatorType } from "contracts/FilterOperatorEnum";
-import EntityRequestBuilder from "./EntityRequestBuilder";
-import date2str from "../utils/date2str";
 import Duration from "./Duration";
 import str2date from "../utils/str2date";
 import User from "entity/User/User";
