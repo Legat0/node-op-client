@@ -27,8 +27,8 @@ const Config = {
   WP_EXTERNAL_ID: 'МТ-429',
   PROJECT_FIELD_EXTERNAL_ID: process.env.REACT_APP__OP_PROJECT_FIELD_EXTERNAL_ID || 'customField1',
   PROJECT_FIELD_FIELD_MAP: process.env.REACT_APP__OP_PROJECT_FIELD_FIELD_MAP || '',
-  WP_FIELD_EXTERNAL_ID: process.env.REACT_APP__OP_WP_FIELD_EXTERNAL_ID || "customField2",
-
+  WP_FIELD_EXTERNAL_ID: process.env.REACT_APP__OP_WP_FIELD_EXTERNAL_ID || "",
+  WP_FIELD_SORT_INDEX: process.env.REACT_APP__OP_WP_FIELD_SORT_INDEX || "",
 } as const
 
 
@@ -63,7 +63,7 @@ class WPExt extends WP {
   @Link("contact_id", CustomOption)
   public linkContact: LinkEntity<CustomOption>;
 
-  @Field("doska_number", Number)
+  @Field(Config.WP_FIELD_SORT_INDEX, Number)
   public doska_number?: Number;
 
   get marks(): Mark[] {
@@ -116,7 +116,7 @@ async function testWP() {
 /** Фильтрация задач */
 async function testWPFilters() {
   const p = await ProjectExt.findOrFail(9);
-
+ console.table(p.fieldMap)
   /** 1. Поиск задачи по полю (external_id) */
   let wp: WPExt | null
   /** 1.1 Через request + useMapField + addFilter */
@@ -130,19 +130,19 @@ async function testWPFilters() {
   wp = await WPExt.request().addFilters([{'status': { operator: 'o' }}]).addFilter('id', '=', Config.WP_ID).first()
   console.table(_.pick(wp, 'id', 'externalId'))
 
-  /** 3. Все открыте задачи из Проекта + сортировка по id + pageSize  */
-  const wpList = await WP.request(undefined, p.fieldMap)
+  /** 3. Все открыте задачи из Проекта + сортировка по доп полю "doska_number" + pageSize */
+  const wpList = await WPExt.request(undefined, p.fieldMap)
     .useMapField(p.fieldMap)
     .addFilter("project", "=", Config.PROJECT_ID)
     .addFilter("status", "o") 
-    .sortBy("id", "desc")
+    .sortBy(Config.WP_FIELD_SORT_INDEX, "desc") // OR .sortBy('doska_number', "desc")
     .pageSize(10)
     .offset(1)
     .getMany();
 
   console.table(
     wpList.map((x) => {
-      return { id: x.id, project: x.project.id, subject: x.subject, assignee: x.assignee?.self.title, status: x.status.self.title };
+      return { id: x.id, project: x.project.id, doska_number: x.doska_number, subject: x.subject, assignee: x.assignee?.self.title, status: x.status.self.title };
     })
   );
 }
