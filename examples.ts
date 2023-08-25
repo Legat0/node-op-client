@@ -24,13 +24,14 @@ dotenv.config();
 const Config = {
   PROJECT_ID: 9,
   WP_ID: 2421,
-  WP_EXTERNAL_ID: 'МТ-429',
-  PROJECT_FIELD_EXTERNAL_ID: process.env.REACT_APP__OP_PROJECT_FIELD_EXTERNAL_ID || 'customField1',
-  PROJECT_FIELD_FIELD_MAP: process.env.REACT_APP__OP_PROJECT_FIELD_FIELD_MAP || '',
+  WP_EXTERNAL_ID: "МТ-429",
+  PROJECT_FIELD_EXTERNAL_ID:
+    process.env.REACT_APP__OP_PROJECT_FIELD_EXTERNAL_ID || "customField1",
+  PROJECT_FIELD_FIELD_MAP:
+    process.env.REACT_APP__OP_PROJECT_FIELD_FIELD_MAP || "",
   WP_FIELD_EXTERNAL_ID: process.env.REACT_APP__OP_WP_FIELD_EXTERNAL_ID || "",
   WP_FIELD_SORT_INDEX: process.env.REACT_APP__OP_WP_FIELD_SORT_INDEX || "",
-} as const
-
+} as const;
 
 class ProjectExt extends Project {
   /** Внешний ИД из Метеора  */
@@ -116,25 +117,31 @@ async function testWP() {
 /** Фильтрация задач */
 async function testWPFilters() {
   const p = await ProjectExt.findOrFail(9);
- console.table(p.fieldMap)
+  console.table(p.fieldMap);
   /** 1. Поиск задачи по полю (external_id) */
-  let wp: WPExt | null
+  let wp: WPExt | null;
   /** 1.1 Через request + useMapField + addFilter */
-  wp = await WPExt.request().useMapField(p.fieldMap).addFilter('external_id', '=', [Config.WP_EXTERNAL_ID]).first()
-  console.table(_.pick(wp, 'id', 'externalId'))
+  wp = await WPExt.request()
+    .useMapField(p.fieldMap)
+    .addFilter("external_id", "=", [Config.WP_EXTERNAL_ID])
+    .first();
+  console.table(_.pick(wp, "id", "externalId"));
   /** 1.2 Через findBy */
-  wp = await WPExt.findBy(Config.WP_FIELD_EXTERNAL_ID, Config.WP_EXTERNAL_ID)
-  console.table(_.pick(wp, 'id', 'externalId'))
+  wp = await WPExt.findBy(Config.WP_FIELD_EXTERNAL_ID, Config.WP_EXTERNAL_ID);
+  console.table(_.pick(wp, "id", "externalId"));
 
   /** 2. Фильтр по id + доп. фильтры */
-  wp = await WPExt.request().addFilters([{'status': { operator: 'o' }}]).addFilter('id', '=', Config.WP_ID).first()
-  console.table(_.pick(wp, 'id', 'externalId'))
+  wp = await WPExt.request()
+    .addFilters([{ status: { operator: "o" } }])
+    .addFilter("id", "=", Config.WP_ID)
+    .first();
+  console.table(_.pick(wp, "id", "externalId"));
 
   /** 3. Все открыте задачи из Проекта + сортировка по доп полю "doska_number" + pageSize */
-  const wpList = await WPExt.request(undefined, p.fieldMap)
+  let wpList = await WPExt.request(undefined, p.fieldMap)
     .useMapField(p.fieldMap)
     .addFilter("project", "=", Config.PROJECT_ID)
-    .addFilter("status", "o") 
+    .addFilter("status", "o")
     .sortBy(Config.WP_FIELD_SORT_INDEX, "desc") // OR .sortBy('doska_number', "desc")
     .pageSize(10)
     .offset(1)
@@ -142,12 +149,39 @@ async function testWPFilters() {
 
   console.table(
     wpList.map((x) => {
-      return { id: x.id, project: x.project.id, doska_number: x.doska_number, subject: x.subject, assignee: x.assignee?.self.title, status: x.status.self.title };
+      return {
+        id: x.id,
+        externalId: x.externalId,
+        project: x.project.id,
+        doska_number: x.doska_number,
+        subject: x.subject,
+        assignee: x.assignee?.self.title,
+        status: x.status.self.title,
+      };
+    })
+  );
+
+  /** 4. Задачи проекта + фильтры */
+  wpList = await p
+    .workPackages(WPExt)
+    .addFilter("status", "o")
+    .sortBy(Config.WP_FIELD_SORT_INDEX, "desc")
+    .pageSize(10)
+    .getMany();
+
+  console.table(
+    wpList.map((x) => {
+      return {
+        id: x.id,
+        externalId: x.externalId,
+        project: x.project.id,
+        doska_number: x.doska_number,
+        subject: x.subject,       
+        status: x.status.self.title,
+      };
     })
   );
 }
-
-
 
 /** Форма фильтра */
 async function testQueryForm() {
@@ -168,7 +202,7 @@ async function testQueryForm() {
       };
     })
   );
-  
+
   let schema = form.visibleFilterSchemas.find((x) => x.id === "customField15");
   schema = schema?.resultingSchema("=");
   console.log({
@@ -187,7 +221,6 @@ async function testQueryForm() {
   });
   // _.pick(x, "allowedFilterValue.id", "allowedFilterValue.self.title")));
 }
-
 
 (async function main() {
   await testWPFilters();

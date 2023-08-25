@@ -16,7 +16,7 @@ export default class EntityRequestBuilder<T extends BaseEntity> {
   private mapField?: MapFieldType;
 
   constructor(
-    T: { new (): T },
+    T: { new (...args: any[]): T },
     requstParams?: GetManyOptions,
     service?: EntityManager,
     map?: MapFieldType

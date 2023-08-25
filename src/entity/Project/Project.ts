@@ -4,6 +4,8 @@ import BaseEntity from "../Abstract/BaseEntity";
 import IProjectBody from "./IProjectBody";
 import Link from "../decorators/Link";
 import QueryFilterInstanceSchema from "../Query/QueryFilterInstanceSchema";
+import WP from "../WP/WP";
+import EntityRequestBuilder from "../Abstract/EntityRequestBuilder";
 
 export default class Project extends BaseEntity {
   // ['constructor']: typeof Project
@@ -33,9 +35,17 @@ export default class Project extends BaseEntity {
 
   filterInstanceSchemas() {
     return QueryFilterInstanceSchema.getAll({
-      url:  `${this.self.href}/queries/filter_instance_schemas`,
+      url: `${this.self.href}/queries/filter_instance_schemas`,
     });
   }
 
   body: IProjectBody;
+
+  workPackages<T extends WP>(target: {
+    new (...args: any[]): T;
+  }): EntityRequestBuilder<T> {
+    return new EntityRequestBuilder<T>(target, {
+      url: this.self.href + "/work_packages",
+    });
+  }
 }
