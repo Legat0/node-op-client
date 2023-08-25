@@ -1,9 +1,9 @@
 import BaseEntity from "../Abstract/BaseEntity";
 import Field from "../decorators/Field";
 import IVersionBody from "./IVersionBody";
-import Project from "entity/Project/Project";
-import Link from "entity/decorators/Link";
-import Embedded from "entity/decorators/Embedded";
+import Project from "../Project/Project";
+import Link from "../decorators/Link";
+import Embedded from "../decorators/Embedded";
 
 export enum VersionStatusEnum {
   open = "open",

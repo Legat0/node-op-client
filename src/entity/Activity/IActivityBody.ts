@@ -1,4 +1,4 @@
-import HtmlFieldValue from "contracts/HtmlFieldValue";
+import HtmlFieldValue from "../../contracts/HtmlFieldValue";
 import IAbstractBody from "../Abstract/IAbstractBody";
 
 export default interface IActivityBody extends IAbstractBody {

@@ -1,11 +1,9 @@
 import IAbstractBody from "../Abstract/IAbstractBody";
-import Embedded from "../decorators/Embedded";
 import BaseEntityAny from "../Abstract/BaseEntityAny";
-import IFieldSchema from "entity/Schema/IFieldSchema";
+import IFieldSchema from "../Schema/IFieldSchema";
 import QueryFilter, { QueryFilterBody } from "./QueryFilter";
 import QueryOperator, { QueryOperatorBody } from "./QueryOperator";
-import { CustomOptionBody } from "entity/CustomOption/CustomOption";
-import { type } from "os";
+import { CustomOptionBody } from "../CustomOption/CustomOption";
 
 type FilterFieldTypes = "[]CustomOption" | "[]User";
 

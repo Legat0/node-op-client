@@ -1,8 +1,7 @@
 import { IEndpoint } from "../Abstract/IEndpoint";
-import { IPayloadEndpoint } from "../Abstract/IPayloadEndpoint";
 import IAbstractBody from "../Abstract/IAbstractBody";
-import IFieldSchema from "entity/Schema/IFieldSchema";
-import Collection from "entity/Schema/Collection";
+import IFieldSchema from "../Schema/IFieldSchema";
+import Collection from "../Schema/Collection";
 import { QueryFilterInstanceSchemaBody } from "./QueryFilterInstanceSchema";
 
 /** Описание полей модели Query */

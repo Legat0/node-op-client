@@ -9,7 +9,7 @@ import {
 } from "../../EntityManager/EntityManager";
 import Duration from "./Duration";
 import str2date from "../utils/str2date";
-import User from "entity/User/User";
+import User from "../User/User";
 
 export interface IPartialAbstractBody
   extends Partial<IAbstractBody<number | string>> {}

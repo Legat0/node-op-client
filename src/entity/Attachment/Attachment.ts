@@ -1,7 +1,7 @@
-import HtmlFieldValue from "contracts/HtmlFieldValue";
-import Field from "entity/decorators/Field";
-import Link from "entity/decorators/Link";
-import User from "entity/User/User";
+import HtmlFieldValue from "../../contracts/HtmlFieldValue";
+import Field from "../../entity/decorators/Field";
+import Link from "../../entity/decorators/Link";
+import User from "../../entity/User/User";
 import BaseEntity from "../Abstract/BaseEntity";
 import IAttachmentBody from "./IAttachmentBody";
 

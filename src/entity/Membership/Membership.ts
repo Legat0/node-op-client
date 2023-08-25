@@ -1,10 +1,10 @@
 import BaseEntity from "../Abstract/BaseEntity";
 import Field from "../decorators/Field";
-import Link from "entity/decorators/Link";
-import Embedded from "entity/decorators/Embedded";
-import Project from "entity/Project/Project";
-import User from "entity/User/User";
-import { Role } from "entity/Role/Role";
+import Link from "../decorators/Link";
+import Embedded from "../decorators/Embedded";
+import Project from "../Project/Project";
+import User from "../User/User";
+import { Role } from "../Role/Role";
 import IMembershipBody from "./IMembershipBody";
 
 export default class Membership extends BaseEntity {

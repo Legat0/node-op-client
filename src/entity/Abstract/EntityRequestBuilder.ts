@@ -1,7 +1,7 @@
 import {
   EntityFieldFilter,
   EntityFilterItem,
-} from "contracts/EntityFilterItem";
+} from "../../contracts/EntityFilterItem";
 import {
   EntityManager,
   GetAllOptions,

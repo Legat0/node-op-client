@@ -1,5 +1,5 @@
 
-import Field from "entity/decorators/Field";
+import Field from "../decorators/Field";
 import BaseEntity from "../Abstract/BaseEntity";
 import IRoleBody from "./IRoleBody";
 
