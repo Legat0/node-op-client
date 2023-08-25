@@ -27,7 +27,7 @@
     "server:up": "docker-compose up -d",
     "server:down": "docker-compose down",
     "test:integration": "jest  --runInBand --testMatch=\"<rootDir>/test/entity/**/*.test.ts\"",
-    "start": "tsc && node dist/main.js",
+    "start": "tsc && node dist/examples.js",
     "_postinstall": "npm ci && npm run build"
   },
   "devDependencies": {

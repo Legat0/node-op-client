@@ -2,7 +2,7 @@ import { FilterOperatorType } from "./FilterOperatorEnum";
 
 export interface EntityFieldFilter {
   operator: FilterOperatorType;
-  values: any[] | any;
+  values?: any[] | any;
 }
 
 export interface EntityFilterItem {

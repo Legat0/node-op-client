@@ -12,7 +12,7 @@ import BaseEntity, { MapFieldType } from "./BaseEntity";
 export default class EntityRequestBuilder<T extends BaseEntity> {
   private service: EntityManager;
   private entity: { new (): T };
-  private requstParams: GetManyOptions;
+  private requstParams: GetManyOptions & Required<Pick<GetManyOptions, 'filters'>>;
   private mapField?: MapFieldType;
 
   constructor(
@@ -23,7 +23,7 @@ export default class EntityRequestBuilder<T extends BaseEntity> {
   ) {
     this.entity = T;
     this.service = service || EntityManager.instance;
-    this.requstParams = requstParams || { filters: [] };
+    this.requstParams = Object.assign({ filters: [] }, requstParams);
     this.mapField = map;
   }
 
@@ -37,18 +37,17 @@ export default class EntityRequestBuilder<T extends BaseEntity> {
     return this;
   }
 
-  public filters(filters: EntityFilterItem[]): this {
-    this.requstParams.filters = filters;
+  public addFilters(filters: EntityFilterItem[]): this {
+    this.requstParams.filters = this.requstParams.filters.concat(filters);
     return this;
   }
   public addFilter(
     key: keyof T["body"] | string,
     operator: EntityFieldFilter["operator"],
-    values: EntityFieldFilter["values"]
+    values?: EntityFieldFilter["values"]
   ): this {
-    key = this.mapField?.[String(key)] || key
-    const filter: EntityFilterItem = { [key]: { operator, values } };
-    if (!this.requstParams.filters) this.requstParams.filters = [];
+    key = this.mapField?.[String(key)] || key;
+    const filter: EntityFilterItem = { [key]: { operator, values } };  
     this.requstParams.filters.push(filter);
     return this;
   }
@@ -105,8 +104,8 @@ export default class EntityRequestBuilder<T extends BaseEntity> {
   public sortBy(column: string, direction: "asc" | "desc" = "asc"): this {
     if (this.requstParams.sortBy === undefined)
       this.requstParams.sortBy = new Map();
-      
-    column = this.mapField?.[String(column)] || column
+
+    column = this.mapField?.[String(column)] || column;
     this.requstParams.sortBy.set(column, direction);
     return this;
   }
@@ -115,17 +114,16 @@ export default class EntityRequestBuilder<T extends BaseEntity> {
     return await this.service.first<T>(this.entity, this.requstParams.filters);
   }
 
-  public async getAll(options?: GetAllOptions) {
-    return await this.service.getAll<T>(this.entity, {
-      ...this.requstParams,
-      ...options,
-    });
+  public async getAll(options?: GetAllOptions) {    
+    return await this.getMany(options)  
   }
 
   public async getMany(options?: GetManyOptions) {
+    const resultFilters = this.requstParams.filters.concat(options?.filters||[])
     return await this.service.getMany<T>(this.entity, {
       ...this.requstParams,
       ...options,
+      filters: resultFilters
     });
   }
 }

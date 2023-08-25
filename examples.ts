@@ -21,12 +21,23 @@ import _ from "lodash";
 
 dotenv.config();
 
+const Config = {
+  PROJECT_ID: 9,
+  WP_ID: 2421,
+  WP_EXTERNAL_ID: 'МТ-429',
+  PROJECT_FIELD_EXTERNAL_ID: process.env.REACT_APP__OP_PROJECT_FIELD_EXTERNAL_ID || 'customField1',
+  PROJECT_FIELD_FIELD_MAP: process.env.REACT_APP__OP_PROJECT_FIELD_FIELD_MAP || '',
+  WP_FIELD_EXTERNAL_ID: process.env.REACT_APP__OP_WP_FIELD_EXTERNAL_ID || "customField2",
+
+} as const
+
+
 class ProjectExt extends Project {
-  /**   */
-  @Field(process.env.REACT_APP__OP_PROJECT_EXTERNAL_ID_FIELD || "", String)
+  /** Внешний ИД из Метеора  */
+  @Field(Config.PROJECT_FIELD_EXTERNAL_ID, String)
   externalId: string;
 
-  @JsonField(process.env.REACT_APP__OP_PROJECT_FIELD_MAP_FIELD || "")
+  @JsonField(Config.PROJECT_FIELD_FIELD_MAP)
   fieldMap: Record<string, string>;
 }
 
@@ -37,7 +48,7 @@ interface Mark {
 }
 class WPExt extends WP {
   /** Внешний ИД из Метеора  */
-  @Field(process.env.REACT_APP__OP_WP_EXTERNAL_ID_FIELD || "", String)
+  @Field(Config.WP_FIELD_EXTERNAL_ID, String)
   externalId: string;
 
   @LinkArray("marks", CustomOption)
@@ -66,6 +77,7 @@ class WPExt extends WP {
   }
 }
 
+/** Настройка авторизации */
 EntityManager.instance.useConfig({
   baseUrl: process.env.OP_BASE_URL,
   authType: AuthTypeEnum[process.env.OP_AUTH_TYPE || ""],
@@ -80,15 +92,17 @@ EntityManager.instance.useConfig({
   },
 });
 
+/** Проект */
 async function testProject() {
-  const p = await ProjectExt.findOrFail(9);
+  const p = await ProjectExt.findOrFail(Config.PROJECT_ID);
   console.log(p.fieldMap);
 }
 
+/** Получение доп полей задачи */
 async function testWP() {
-  const p = await ProjectExt.findOrFail(9);
+  const p = await ProjectExt.findOrFail(Config.PROJECT_ID);
 
-  const wp = await WPExt.findOrFail(2421);
+  const wp = await WPExt.findOrFail(Config.WP_ID);
   wp.useMapField(p.fieldMap);
 
   console.log(p.fieldMap);
@@ -99,13 +113,28 @@ async function testWP() {
   console.log(wp.stage_date_finish, wp.task_date_finish);
 }
 
+/** Фильтрация задач */
 async function testWPFilters() {
   const p = await ProjectExt.findOrFail(9);
+
+  /** 1. Поиск задачи по полю (external_id) */
+  let wp: WPExt | null
+  /** 1.1 Через request + useMapField + addFilter */
+  wp = await WPExt.request().useMapField(p.fieldMap).addFilter('external_id', '=', [Config.WP_EXTERNAL_ID]).first()
+  console.table(_.pick(wp, 'id', 'externalId'))
+  /** 1.2 Через findBy */
+  wp = await WPExt.findBy(Config.WP_FIELD_EXTERNAL_ID, Config.WP_EXTERNAL_ID)
+  console.table(_.pick(wp, 'id', 'externalId'))
+
+  /** 2. Фильтр по id + доп. фильтры */
+  wp = await WPExt.request().addFilters([{'status': { operator: 'o' }}]).addFilter('id', '=', Config.WP_ID).first()
+  console.table(_.pick(wp, 'id', 'externalId'))
+
+  /** 3. Все открыте задачи из Проекта + сортировка по id + pageSize  */
   const wpList = await WP.request(undefined, p.fieldMap)
     .useMapField(p.fieldMap)
-    .addFilter("project", "=", 9)
-    // .addFilter("status", "=", [1])
-    .addFilter("external_id", "=", ["МТ-429"])
+    .addFilter("project", "=", Config.PROJECT_ID)
+    .addFilter("status", "o") 
     .sortBy("id", "desc")
     .pageSize(10)
     .offset(1)
@@ -113,26 +142,22 @@ async function testWPFilters() {
 
   console.table(
     wpList.map((x) => {
-      return { id: x.id, subject: x.subject, assignee: x.assignee };
+      return { id: x.id, project: x.project.id, subject: x.subject, assignee: x.assignee?.self.title, status: x.status.self.title };
     })
   );
 }
 
+
+
+/** Форма фильтра */
 async function testQueryForm() {
   const p = await ProjectExt.findOrFail(9);
   // const list = await QueryFilterInstanceSchema.getAll();
   const q = new Query();
   q.name = "default";
   q.project = p;
-  const form = await Query.form(q);
 
-  const filterFields =
-    form.body._embedded.schema._embedded.filtersSchemas._embedded.elements.map(
-      (x) => {
-        const queryFilter = x.filter._embedded?.allowedValues?.[0];
-        return { id: queryFilter?.id, title: queryFilter?._links.self.title };
-      }
-    );
+  const form = await Query.form(q);
 
   console.table(
     form.visibleFilterSchemas.map((x) => {
@@ -143,6 +168,7 @@ async function testQueryForm() {
       };
     })
   );
+  
   let schema = form.visibleFilterSchemas.find((x) => x.id === "customField15");
   schema = schema?.resultingSchema("=");
   console.log({
@@ -150,6 +176,7 @@ async function testQueryForm() {
     values: schema?.values?.type,
     allowedValues: schema?.allowedValues?.length,
   });
+
   schema = form.visibleFilterSchemas
     .find((x) => x.id === "author")
     ?.resultingSchema("=");
@@ -161,6 +188,7 @@ async function testQueryForm() {
   // _.pick(x, "allowedFilterValue.id", "allowedFilterValue.self.title")));
 }
 
+
 (async function main() {
-  await testQueryForm();
+  await testWPFilters();
 })();
