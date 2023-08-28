@@ -1,5 +1,5 @@
 {
-  "version": "1.5.13",
+  "version": "1.5.14",
   "name": "op-client",
   "_from": "op-client",
   "license": "MIT",
@@ -32,18 +32,18 @@
   },
   "devDependencies": {
     "@types/jest": "^26.0.9",
+    "@types/lodash": "^4.14.197",
     "@types/node": "^8.10.64",
     "@zerollup/ts-transform-paths": "^1.7.18",
     "dotenv": "^8.6.0",
     "jest": "^26.6.3",
-    "@types/lodash": "^4.14.197",
     "lodash": "^4.17.21",
     "ts-jest": "^26.2.0",
     "ts-node": "^9.0.0",
     "typescript": "^5.0.4"
   },
   "dependencies": {
-    
+    "async-sema": "^3.1.1",
     "client-oauth2": "^4.3.3",
     "cross-fetch": "^4.0.0",
     "events": "^3.3.0",

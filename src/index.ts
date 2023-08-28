@@ -1,5 +1,12 @@
-import entityManager, {EntityManager ,EntityManagerConfig, AuthTypeEnum} from "./EntityManager/EntityManager";
-import BaseEntityAny, {LinkEntity, EntityCollectionElement} from "./entity/Abstract/BaseEntityAny";
+import entityManager, {
+  EntityManager,
+  AuthTypeEnum,
+} from "./EntityManager/EntityManager";
+
+import BaseEntityAny, {
+  LinkEntity,
+  EntityCollectionElement,
+} from "./entity/Abstract/BaseEntityAny";
 import BaseEntity from "./entity/Abstract/BaseEntity";
 
 import Duration from "./entity/Abstract/Duration";
@@ -15,20 +22,23 @@ import Query from "./entity/Query/Query";
 import QueryForm from "./entity/Query/QueryForm";
 import QueryFilterInstanceSchema from "./entity/Query/QueryFilterInstanceSchema";
 
-
 import Field from "./entity/decorators/Field";
 import Link from "./entity/decorators/Link";
 import Embedded from "./entity/decorators/Embedded";
 import JsonField from "./entity/decorators/JsonField";
 import LinkArray from "./entity/decorators/LinkArray";
 import StatusEnum from "./entity/Status/StatusEnum";
-import { EntityFilterItem } from "./contracts/EntityFilterItem";
+
+export { type EntityFilterItem } from "./contracts/EntityFilterItem";
+
+export { type EntityManagerConfig } from "./EntityManager/EntityManager";
 
 export {
   EntityManager,
-  EntityManagerConfig,
   AuthTypeEnum,
-  BaseEntityAny, LinkEntity, EntityCollectionElement,
+  BaseEntityAny,
+  LinkEntity,
+  EntityCollectionElement,
   BaseEntity,
   EntityRequestBuilder,
   CustomOption,
@@ -47,13 +57,11 @@ export {
   JsonField,
   LinkArray,
   Duration,
-  User,  
-
-  EntityFilterItem
+  User,
 };
 
-export default entityManager
+export default entityManager;
 
 export function customFieldName(id?: number | bigint) {
-  return id ? 'customField' + id : ''
+  return id ? "customField" + id : "";
 }
