@@ -1,5 +1,7 @@
 import fetch from "cross-fetch";
-import BaseEntityAny, {EntityCollectionElement} from "../entity/Abstract/BaseEntityAny";
+import BaseEntityAny, {
+  EntityCollectionElement,
+} from "../entity/Abstract/BaseEntityAny";
 import BaseEntity from "../entity/Abstract/BaseEntity";
 import { IEndpoint } from "../entity/Abstract/IEndpoint";
 import ClientOAuth2, { Options, Token } from "client-oauth2";
@@ -9,6 +11,7 @@ import { EntityFilterItem } from "../contracts/EntityFilterItem";
 import { FilterOperatorType } from "../contracts/FilterOperatorEnum";
 
 interface IFetchInit extends Omit<RequestInit, "body"> {
+  headers?: Record<string, string>;
   body?: BodyInit | object;
 }
 
@@ -64,7 +67,7 @@ export interface GetManyOptions extends GetAllOptions {
 }
 
 export class EntityManager {
-  private OAuth;
+  private OAuth: any;
   private config: EntityManagerConfig;
   private emitter: EventEmitter;
   oauthToken?: Token;
@@ -216,7 +219,7 @@ export class EntityManager {
   }
 
   async get<T extends BaseEntityAny>(
-    T,
+    T: any,
     id: number | string | bigint | IEndpoint
   ): Promise<T> {
     const result = new T(id);
@@ -231,7 +234,7 @@ export class EntityManager {
   }
 
   async getMany<T extends BaseEntityAny>(
-    T,
+    T: any,
     options: GetManyOptions = {}
   ): Promise<EntityCollectionElement<T>[]> {
     const result: EntityCollectionElement<T>[] = [];
@@ -256,7 +259,7 @@ export class EntityManager {
       const fetchResult = await this.fetch(`${options.url || T.url}?${query}`);
       result.push(
         ...fetchResult._embedded.elements.map(
-          (eachElement) => new T(eachElement)
+          (eachElement: any) => new T(eachElement)
         )
       );
       total = fetchResult.total;
@@ -265,7 +268,7 @@ export class EntityManager {
   }
 
   async getAll<T extends BaseEntityAny>(
-    T,
+    T: any,
     options: GetAllOptions = {}
   ): Promise<Array<EntityCollectionElement<T>>> {
     return await this.getMany<T>(T, {
@@ -310,11 +313,11 @@ export class EntityManager {
     } else {
       if (entity instanceof WP)
         entity.body.lockVersion = patchedBody.lockVersion;
-      entity.body["updatedAt"] = patchedBody
-        .updatedAt(
-          // updating embedded
-          (fieldPaths as string[]) || []
-        )
+
+      entity.body["updatedAt"] = patchedBody.updatedAt;
+
+      // updating embedded
+      ((fieldPaths as string[]) || [])
         .filter((fieldPath) => fieldPath.startsWith("_links."))
         .map((fieldPaths) => fieldPaths.substr(7))
         .forEach(
@@ -343,7 +346,7 @@ export class EntityManager {
     entity.body = createdBody;
     return entity;
   }
- 
+
   public async first<T extends BaseEntity>(
     T: any,
     filters?: EntityFilterItem[]

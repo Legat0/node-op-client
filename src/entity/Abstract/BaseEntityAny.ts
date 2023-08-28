@@ -1,15 +1,15 @@
-import { IEndpoint } from "./IEndpoint";
-import IAbstractBody from "./IAbstractBody";
-import set from "keypather/set";
-import get from "keypather/get";
 import {
   EntityManager,
   GetAllOptions,
-  GetManyOptions,
+  GetManyOptions
 } from "../../EntityManager/EntityManager";
-import Duration from "./Duration";
-import str2date from "../utils/str2date";
 import User from "../User/User";
+import str2date from "../utils/str2date";
+import Duration from "./Duration";
+import IAbstractBody from "./IAbstractBody";
+import { IEndpoint } from "./IEndpoint";
+const set = require("keypather/set");
+const get = require("keypather/get");
 
 export interface IPartialAbstractBody
   extends Partial<IAbstractBody<number | string>> {}
@@ -146,7 +146,7 @@ export default abstract class BaseEntityAny<
     this.body._links.self.title = undefined;
   }
 
-  fill(source) {
+  fill(source: object) {
     const copy = JSON.parse(JSON.stringify(source)) as IAbstractBody;
     Object.assign(this.body, copy);
     return this;
@@ -236,7 +236,7 @@ export default abstract class BaseEntityAny<
     }
   }
 
-  public static convertToType(value, type?: any) {
+  public static convertToType(value: any, type?: any) {
     if (type === Date) {
       return str2date(value);
     } else if (type === Duration) {

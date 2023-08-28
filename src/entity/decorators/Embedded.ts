@@ -7,19 +7,19 @@ export default function Embedded(
   type: new (...args: any[]) => BaseEntityAny
 ) {
   return function (target: BaseEntityAny, propertyKey: string | symbol): void {
-    function getter(): BaseEntityAny | undefined {
+    function getter(this: BaseEntityAny): BaseEntityAny | undefined {
       name = this.getFieldName(name);
       if (!name) return
-      if (this.body._embedded.hasOwnProperty(name)) {
+      if (this.body._embedded?.hasOwnProperty(name)) {
         return new type(this.body._embedded[name]);
       }
     }
 
-    function setter(value: BaseEntityAny) {
-      name = this.getFieldName(name);
-      if (!name) return
-      this.body._embedded[name] = value.body;
-    }
+    // function setter(this: BaseEntityAny, value: BaseEntityAny) {
+    //   name = this.getFieldName(name);
+    //   if (!name) return
+    //   this.body._embedded[name] = value.body;
+    // }
 
     Object.defineProperty(target, propertyKey, {
       get: getter,

@@ -1,9 +1,10 @@
+import BaseEntityAny from "../Abstract/BaseEntityAny";
 import BaseEntity from "../Abstract/BaseEntity";
 
 export default function JsonField(name: string, type?: any) {
   return function (target: BaseEntity, propertyKey: string | symbol): void {
-    function getter() {
-      name = this.getFieldName(name);
+    function getter(this: BaseEntityAny | BaseEntity) {
+      name = target.getFieldName(name);
       if (!name) return
 
       if (this.body.hasOwnProperty(name)) {
@@ -20,12 +21,13 @@ export default function JsonField(name: string, type?: any) {
       }
     }
 
-    function setter(value) {
-      name = this.getFieldName(name);
+    function setter(this: BaseEntityAny | BaseEntity, value: any) {
+      name = target.getFieldName(name);
       if (!name) return
 
       const newValue = JSON.stringify(value);
-      if (this.body[name] !== newValue) this.$dirty.push(name);
+      if (this.body[name] !== newValue && this instanceof BaseEntity &&
+        Array.isArray(this.$dirty)) this.$dirty.push(name);
       this.body[name] = newValue;
     }
 

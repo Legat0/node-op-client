@@ -1,21 +1,23 @@
-import BaseEntityAny from "../Abstract/BaseEntityAny";
-import str2date from "../utils/str2date";
-import date2str from "../utils/date2str";
+import BaseEntityAny, { LinkEntity } from "../Abstract/BaseEntityAny";
 import { NullLink } from "../Abstract/IEndpoint";
+import BaseEntity from "../Abstract/BaseEntity";
 
 export default function Link(
   name: string,
   type: new (...args: any[]) => BaseEntityAny
 ) {
-  return function (target: BaseEntityAny, propertyKey: string | symbol): void {   
-
-    function getter(): BaseEntityAny | undefined | null {
-      name = this.getFieldName(name)
-      if (!name) return
+  return function (target: BaseEntityAny, propertyKey: string | symbol): void {
+    function getter(
+      this: BaseEntityAny
+    ): BaseEntityAny | LinkEntity<BaseEntityAny> | undefined | null {
+      name = this.getFieldName(name);
+      if (!name) return;
 
       if (this.body._links.hasOwnProperty(name)) {
         const linkSelf = this.body._links[name];
-        if (this._links[name] !== undefined) return this._links[name];
+        const cachedLinks = this._links[name];
+        if (cachedLinks !== undefined && !Array.isArray(cachedLinks))
+          return cachedLinks;
 
         if (linkSelf.href) {
           return (this._links[name] = new type(linkSelf));
@@ -25,11 +27,15 @@ export default function Link(
       }
     }
 
-    function setter(value: BaseEntityAny) {
-      name = this.getFieldName(name)
-      if (!name) return
+    function setter(this: BaseEntityAny | BaseEntity, value: BaseEntityAny) {
+      name = this.getFieldName(name);
+      if (!name) return;
 
-      if (this.body._links[name]?.href !== value?.self?.href)
+      if (
+        this.body._links[name]?.href !== value?.self?.href &&
+        this instanceof BaseEntity &&
+        Array.isArray(this.$dirty)
+      )
         this.$dirty.push(`_links.${name}`);
 
       if (value) {

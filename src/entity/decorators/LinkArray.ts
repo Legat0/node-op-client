@@ -1,4 +1,4 @@
-import BaseEntityAny from "../Abstract/BaseEntityAny";
+import BaseEntityAny, { LinkEntity } from "../Abstract/BaseEntityAny";
 
 export default function LinkArray(
   /** real name or alias */
@@ -6,13 +6,14 @@ export default function LinkArray(
   type: new (...args: any[]) => BaseEntityAny
 ) {
   return function (target: BaseEntityAny, propertyKey: string | symbol): void {
-    function getter(): BaseEntityAny[] | undefined | null {
+    function getter(this: BaseEntityAny): BaseEntityAny[] | LinkEntity<BaseEntityAny>[] | undefined | null {
       name = this.getFieldName(name);
       if (!name) return
 
       if (this.body._links.hasOwnProperty(name)) {
         const linkSelf = this.body._links[name];
-        if (this._links[name] !== undefined) return this._links[name];
+        const cachedLinks = this._links[name] 
+        if (cachedLinks !== undefined && Array.isArray(cachedLinks)) return cachedLinks;
 
         if (Array.isArray(linkSelf)) {
           return (this._links[name] = linkSelf.map((x) => new type(x)));
@@ -22,7 +23,7 @@ export default function LinkArray(
       }
     }
 
-    function setter(value: BaseEntityAny[]) {
+    function setter(this: BaseEntityAny, value: BaseEntityAny[]) {
       name = this.getFieldName(name);
       if (!name) return
 

@@ -1,9 +1,10 @@
+import BaseEntity from "../Abstract/BaseEntity";
 import BaseEntityAny from "../Abstract/BaseEntityAny";
-import str2date from "../utils/str2date";
-import date2str from "../utils/date2str";
 import Duration from "../Abstract/Duration";
+import date2str from "../utils/date2str";
+import str2date from "../utils/str2date";
 
-function castValue(value, type?: any) {
+function castValue(value: any, type?: any) {
   if (type === Date) {
     return date2str(value);
   } else if (type === Duration) {
@@ -15,9 +16,9 @@ function castValue(value, type?: any) {
 
 export default function Field(name: string, type?: any) {
   return function (target: BaseEntityAny, propertyKey: string | symbol): void {
-    function getter() {      
+    function getter(this: BaseEntityAny) {
       name = this.getFieldName(name);
-      if (!name) return
+      if (!name) return;
       if (this.body.hasOwnProperty(name)) {
         if (type === Date) {
           return str2date(this.body[name]);
@@ -29,11 +30,18 @@ export default function Field(name: string, type?: any) {
       }
     }
 
-    function setter(value) {
+    function setter(this: BaseEntityAny | BaseEntity, value: any) {
       name = this.getFieldName(name);
-      if (!name) return
+      if (!name) return;
       const newValue = castValue(value);
-      if (this.body[name] !== newValue) this.$dirty.push(name);
+      if (
+        this.body[name] !== newValue &&
+        this instanceof BaseEntity &&
+        Array.isArray(this.$dirty)
+      ) {
+        this.$dirty.push(name);
+      }
+
       this.body[name] = newValue;
     }
 

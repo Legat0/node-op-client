@@ -81,7 +81,7 @@ class WPExt extends WP {
 /** Настройка авторизации */
 EntityManager.instance.useConfig({
   baseUrl: process.env.OP_BASE_URL,
-  authType: AuthTypeEnum[process.env.OP_AUTH_TYPE || ""],
+  authType: (process.env.OP_AUTH_TYPE as AuthTypeEnum) || AuthTypeEnum.APIKEY,
   apiKeyOptions: {
     getApiKey: () => {
       return process.env.OP_API_KEY || "";
@@ -176,7 +176,7 @@ async function testWPFilters() {
         externalId: x.externalId,
         project: x.project.id,
         doska_number: x.doska_number,
-        subject: x.subject,       
+        subject: x.subject,
         status: x.status.self.title,
       };
     })
@@ -222,6 +222,30 @@ async function testQueryForm() {
   // _.pick(x, "allowedFilterValue.id", "allowedFilterValue.self.title")));
 }
 
+async function testUpdateWP() {
+  const wp = await WPExt.findOrFail(Config.WP_ID);
+  wp.status = new Status(1);
+  console.table({
+    id: wp.id,
+    status: wp.status.id,
+    dirty: wp.$dirty.join("|"),
+  });
+}
+
+async function testGetWP() {
+  const p = await ProjectExt.findOrFail(9);
+  const wp = await WPExt.findOrFail(Config.WP_ID);
+  wp.useMapField(p.fieldMap)
+
+  console.table({
+    id: wp.id,
+    externalId: wp.externalId,
+    stage_date_finish: wp.stage_date_finish,
+    linkContact: wp.linkContact.self.title,
+    marks: wp.marks.map((x) => x.name).join("|"),
+  });
+}
+
 (async function main() {
-  await testWPFilters();
+  await testGetWP();
 })();
