@@ -1,8 +1,8 @@
-import BaseEntity from "../Abstract/BaseEntity";
-import Link from "../decorators/Link";
-import IRelationBody from "./IRelationBody";
-import Field from "../decorators/Field";
-import WP from "../WP/WP";
+import BaseEntity from '../Abstract/BaseEntity'
+import Link from '../decorators/Link'
+import type IRelationBody from './IRelationBody'
+import Field from '../decorators/Field'
+import WP from '../WP/WP'
 
 export enum RelationTypeEnum {
   TYPE_RELATES = 'relates',

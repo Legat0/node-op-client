@@ -1,5 +1,5 @@
-import {IEndpoint} from "../Abstract/IEndpoint";
-import IAbstractBody from "../Abstract/IAbstractBody";
+import { type IEndpoint } from '../Abstract/IEndpoint'
+import type IAbstractBody from '../Abstract/IAbstractBody'
 
 export default interface IMembershipBody extends IAbstractBody {
   _type?: 'Membership'
@@ -72,5 +72,5 @@ export default interface IMembershipBody extends IAbstractBody {
     principal?: IEndpoint
     project?: IEndpoint
   }
-  _meta?: { notificationMessage?: object; sendNotifications?: boolean }
+  _meta?: { notificationMessage?: object, sendNotifications?: boolean }
 }

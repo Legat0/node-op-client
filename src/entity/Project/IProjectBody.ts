@@ -1,22 +1,21 @@
-import {IEndpoint} from "../Abstract/IEndpoint";
-import {IPayloadEndpoint} from "../Abstract/IPayloadEndpoint";
-import IAbstractBody from "../Abstract/IAbstractBody";
+import { type IEndpoint } from '../Abstract/IEndpoint'
+import type IAbstractBody from '../Abstract/IAbstractBody'
 
-export default interface IProjectBody extends IAbstractBody{
-  "_type"?: "Project",
-  "identifier": string,
-  "name"?: string,
-  "active"?: boolean,
-  "public"?: boolean,
-  "description"?: {
-    "format": "markdown",
-    "raw": string,
-    "html": string,
-  },
-  "createdAt": string,
-  "updatedAt": string,
-  "status": string,
-  "_links": IAbstractBody['_links'] & {
+export default interface IProjectBody extends IAbstractBody {
+  '_type'?: 'Project'
+  'identifier': string
+  'name'?: string
+  'active'?: boolean
+  'public'?: boolean
+  'description'?: {
+    'format': 'markdown'
+    'raw': string
+    'html': string
+  }
+  'createdAt': string
+  'updatedAt': string
+  'status': string
+  '_links': IAbstractBody['_links'] & {
     // "categories": {
     //   "href": "/api/v3/projects/2/categories"
     // },
@@ -27,9 +26,9 @@ export default interface IProjectBody extends IAbstractBody{
     // "schema": {
     //   "href": "/api/v3/projects/schema"
     // },
-    "parent": IEndpoint
+    'parent': IEndpoint
   }
-  "position"?: number,
-  "isDefault"?: boolean,
-  "isMilestone"?: boolean,
+  'position'?: number
+  'isDefault'?: boolean
+  'isMilestone'?: boolean
 }

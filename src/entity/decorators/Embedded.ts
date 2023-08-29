@@ -1,17 +1,15 @@
-import BaseEntityAny from "../Abstract/BaseEntityAny";
-import str2date from "../utils/str2date";
-import date2str from "../utils/date2str";
+import type BaseEntityAny from '../Abstract/BaseEntityAny'
 
-export default function Embedded(
+export default function Embedded (
   name: string,
-  type: new (...args: any[]) => BaseEntityAny
+  Type: new (...args: any[]) => BaseEntityAny
 ) {
   return function (target: BaseEntityAny, propertyKey: string | symbol): void {
-    function getter(this: BaseEntityAny): BaseEntityAny | undefined {
-      name = this.getFieldName(name);
-      if (!name) return
-      if (this.body._embedded?.hasOwnProperty(name)) {
-        return new type(this.body._embedded[name]);
+    function getter (this: BaseEntityAny): BaseEntityAny | undefined {
+      name = this.getFieldName(name)
+      if (name === '') return
+      if (this.body._embedded != null && Object.prototype.hasOwnProperty.call(this.body._embedded, name)) {
+        return new Type(this.body._embedded[name])
       }
     }
 
@@ -25,7 +23,7 @@ export default function Embedded(
       get: getter,
       // set: setter,
       enumerable: true,
-      configurable: true,
-    });
-  };
+      configurable: true
+    })
+  }
 }

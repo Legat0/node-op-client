@@ -1,37 +1,36 @@
-import BaseEntity from "../Abstract/BaseEntity";
-import Field from "../decorators/Field";
-import IVersionBody from "./IVersionBody";
-import Project from "../Project/Project";
-import Link from "../decorators/Link";
-import Embedded from "../decorators/Embedded";
+import BaseEntity from '../Abstract/BaseEntity'
+import Field from '../decorators/Field'
+import type IVersionBody from './IVersionBody'
+import Project from '../Project/Project'
+import Link from '../decorators/Link'
+import Embedded from '../decorators/Embedded'
 
 export enum VersionStatusEnum {
-  open = "open",
-  locked = "locked",
-  closed = "closed",
+  open = 'open',
+  locked = 'locked',
+  closed = 'closed',
 }
 
 export class Version extends BaseEntity {
-  public static url = "/api/v3/versions";
+  public static url = '/api/v3/versions'
 
-  @Field("startDate", Date)
-  public startDate?: Date | null;
+  @Field('startDate', Date)
+  public startDate?: Date | null
 
-  @Field("endDate", Date)
-  public endDate?: Date | null;
+  @Field('endDate', Date)
+  public endDate?: Date | null
 
-  @Link("definingProject", Project)
-  public definingProject: Project;
+  @Link('definingProject', Project)
+  public definingProject: Project
 
-  @Embedded("definingProject", Project)
-  public embeddedProject: Project;
+  @Embedded('definingProject', Project)
+  public embeddedProject: Project
 
-  @Field("name", String)
-  public name: string;
+  @Field('name', String)
+  public name: string
 
-  @Field("status", String)
-  public status?: VersionStatusEnum;
+  @Field('status', String)
+  public status?: VersionStatusEnum
 
-  public body: IVersionBody;
-
+  public body: IVersionBody
 }

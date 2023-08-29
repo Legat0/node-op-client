@@ -1,42 +1,42 @@
-import BaseEntity from "../Abstract/BaseEntity";
-import Field from "../decorators/Field";
-import IUserBody from "./IUserBody";
+import BaseEntity from '../Abstract/BaseEntity'
+import Field from '../decorators/Field'
+import type IUserBody from './IUserBody'
 
 export enum UserStatusEnum {
-  active = "active",
-  registered = "registered",
-  locked = "locked",
-  invited = "invited",
+  active = 'active',
+  registered = 'registered',
+  locked = 'locked',
+  invited = 'invited',
 }
 export default class User extends BaseEntity {
   // ["constructor"]: typeof User;
 
-  static url = "/api/v3/users";
+  static url = '/api/v3/users'
 
-  body: IUserBody;
+  body: IUserBody
 
-  @Field("name", String)
-  name: string;
+  @Field('name', String)
+    name: string
 
-  @Field("login", String)
-  login: string;
+  @Field('login', String)
+    login: string
 
-  @Field("firstName", String)
-  firstName: string;
+  @Field('firstName', String)
+    firstName: string
 
-  @Field("lastName", String)
-  lastName: string;
+  @Field('lastName', String)
+    lastName: string
 
-  @Field("email", String)
-  email: string;
+  @Field('email', String)
+    email: string
 
-  @Field("status", UserStatusEnum)
-  status: UserStatusEnum;
+  @Field('status', UserStatusEnum)
+    status: UserStatusEnum
 
-  @Field("avatar", String)
-  avatar: string;
+  @Field('avatar', String)
+    avatar: string
 
-  get avatarUrl(): string {
-    return this.getService().makeUrl(this.self.href + "/avatar");
+  get avatarUrl (): string {
+    return this.getService().makeUrl(this.self.href + '/avatar')
   }
 }

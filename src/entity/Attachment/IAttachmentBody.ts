@@ -1,14 +1,14 @@
-import HtmlFieldValue from "../../contracts/HtmlFieldValue";
-import IAbstractBody from "../Abstract/IAbstractBody";
+import type HtmlFieldValue from '../../contracts/HtmlFieldValue'
+import type IAbstractBody from '../Abstract/IAbstractBody'
 
 export default interface IAttachmentBody extends IAbstractBody {
-  _type?: "Attachment";
+  _type?: 'Attachment'
 
-  fileName: string;
-  fileSize: number;
-  createdAt: string;
-  contentType: string;
-  description: HtmlFieldValue | string;
+  fileName: string
+  fileSize: number
+  createdAt: string
+  contentType: string
+  description: HtmlFieldValue | string
 
-  _links: IAbstractBody["_links"];
+  _links: IAbstractBody['_links']
 }

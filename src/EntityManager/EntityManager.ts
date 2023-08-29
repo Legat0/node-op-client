@@ -1,305 +1,303 @@
-import fetch from "cross-fetch";
-import BaseEntityAny, {
-  EntityCollectionElement,
-} from "../entity/Abstract/BaseEntityAny";
-import BaseEntity from "../entity/Abstract/BaseEntity";
-import { IEndpoint } from "../entity/Abstract/IEndpoint";
-import ClientOAuth2, { Options, Token } from "client-oauth2";
-import WP from "../entity/WP/WP";
-import EventEmitter from "events";
-import { EntityFilterItem } from "../contracts/EntityFilterItem";
-import { FilterOperatorType } from "../contracts/FilterOperatorEnum";
-import { Sema } from "async-sema";
+import fetch from 'cross-fetch'
+import { type EntityCollectionElement } from '../entity/Abstract/BaseEntityAny'
+import type BaseEntityAny from '../entity/Abstract/BaseEntityAny'
+import type BaseEntity from '../entity/Abstract/BaseEntity'
+import { type IEndpoint } from '../entity/Abstract/IEndpoint'
+import ClientOAuth2, { type Options, type Token } from 'client-oauth2'
+import WP from '../entity/WP/WP'
+import EventEmitter from 'events'
+import { type EntityFilterItem } from '../contracts/EntityFilterItem'
+import { type FilterOperatorType } from '../contracts/FilterOperatorEnum'
+import { Sema } from 'async-sema'
 
-interface IFetchInit extends Omit<RequestInit, "body"> {
-  headers?: Record<string, string>;
-  body?: BodyInit | object;
+interface IFetchInit extends Omit<RequestInit, 'body'> {
+  headers?: Record<string, string>
+  body?: BodyInit | object
 }
 
-function base64Encode(s: string): string {
-  return typeof window !== "undefined"
+function base64Encode (s: string): string {
+  return typeof window !== 'undefined'
     ? window.btoa(s)
-    : Buffer.from(s).toString("base64");
+    : Buffer.from(s).toString('base64')
 }
 
-function getApiKeyFromLocalStorage(): string | null {
-  if (typeof localStorage !== "undefined") {
-    return localStorage.getItem("OP_API_KEY");
+function getApiKeyFromLocalStorage (): string | null {
+  if (typeof localStorage !== 'undefined') {
+    return localStorage.getItem('OP_API_KEY')
   }
-  return "";
+  return ''
 }
 
 export enum AuthTypeEnum {
-  OAUTH = "OAUTH",
-  APIKEY = "APIKEY",
+  OAUTH = 'OAUTH',
+  APIKEY = 'APIKEY',
 }
 export interface EntityManagerConfig {
-  baseUrl: string;
-  authType: AuthTypeEnum;
+  baseUrl: string
+  authType: AuthTypeEnum
   apiKeyOptions?: {
-    getApiKey: () => string | undefined | null;
-  };
+    getApiKey: () => string | undefined | null
+  }
   oauthOptions?: Options & {
-    oauthToken?: Token;
-  };
+    oauthToken?: Token
+  }
   /** default pageSize for getAll */
-  pageSize?: number;
+  pageSize?: number
   /** default count threads for getAll  */
-  threads?: number;
+  threads?: number
 }
 
 export interface FetchRequest extends RequestInit {
-  url: string;
+  url: string
 }
 
 export interface ICollectionStat {
-  total: number;
-  pageSize: number;
-  offset: number;
+  total: number
+  pageSize: number
+  offset: number
 }
 export class CollectionStat implements ICollectionStat {
-  public total: number;
-  public pageSize: number;
-  public offset: number;
-  constructor() {
-    this.total = 0;
-    this.pageSize = 0;
-    this.offset = 0;
+  public total: number
+  public pageSize: number
+  public offset: number
+  constructor () {
+    this.total = 0
+    this.pageSize = 0
+    this.offset = 0
   }
 }
 
 export interface GetAllOptions {
-  notify?: boolean;
-  filters?: EntityFilterItem[];
-  sortBy?: Map<string, "asc" | "desc">;
-  groupBy?: string;
-  showSums?: boolean;
-  select?: string[];
-  url?: string;
+  notify?: boolean
+  filters?: EntityFilterItem[]
+  sortBy?: Map<string, 'asc' | 'desc'>
+  groupBy?: string
+  showSums?: boolean
+  select?: string[]
+  url?: string
   /** limit */
-  pageSize?: number;
-  threads?: number;
+  pageSize?: number
+  threads?: number
 }
 export interface GetManyOptions extends GetAllOptions {
   /** page */
-  offset?: number;
+  offset?: number
 }
 
 export class EntityManager {
-  private OAuth: any;
-  private config: EntityManagerConfig;
-  private emitter: EventEmitter;
-  oauthToken?: Token;
+  private OAuth: any
+  private config: EntityManagerConfig
+  private readonly emitter: EventEmitter
+  oauthToken?: Token
 
-  public static instance: EntityManager;
+  public static instance: EntityManager
 
-  constructor(config?: Partial<EntityManagerConfig>) {
-    this.emitter = new EventEmitter();
-    this.useConfig(config);
+  constructor (config?: Partial<EntityManagerConfig>) {
+    this.emitter = new EventEmitter()
+    this.useConfig(config)
   }
 
-  public useConfig(config?: Partial<EntityManagerConfig>): this {
+  public useConfig (config?: Partial<EntityManagerConfig>): this {
     this.config = {
-      baseUrl: "http://localhost",
+      baseUrl: 'http://localhost',
       authType: AuthTypeEnum.APIKEY,
       pageSize: 100,
       ...config,
       apiKeyOptions: {
         getApiKey: getApiKeyFromLocalStorage,
-        ...config?.apiKeyOptions,
-      },
-    };
+        ...config?.apiKeyOptions
+      }
+    }
     this.config.oauthOptions = {
       accessTokenUri: `${this.config.baseUrl}/oauth/token`,
-      ...config?.oauthOptions,
-    };
-
-    const fullOauthOptions: Options = this.config?.oauthOptions;
-    if (!fullOauthOptions.clientSecret) {
-      fullOauthOptions.authorizationUri = `${this.config.baseUrl}/oauth/authorize`;
+      ...config?.oauthOptions
     }
-    this.OAuth = new ClientOAuth2(fullOauthOptions);
 
-    this.oauthToken = this.config?.oauthOptions?.oauthToken;
-    return this;
+    const fullOauthOptions: Options = this.config?.oauthOptions
+    if (fullOauthOptions.clientSecret == null) {
+      fullOauthOptions.authorizationUri = `${this.config.baseUrl}/oauth/authorize`
+    }
+    this.OAuth = new ClientOAuth2(fullOauthOptions)
+
+    this.oauthToken = this.config?.oauthOptions?.oauthToken
+    return this
   }
 
-  public onBeforeRequest(listener: (req: FetchRequest) => void) {
-    this.emitter.addListener(this.onBeforeRequest.name, listener);
+  public onBeforeRequest (listener: (req: FetchRequest) => void): void {
+    this.emitter.addListener(this.onBeforeRequest.name, listener)
   }
 
-  public makeUrl(path: string | URL): string {
+  public makeUrl (path: string | URL): string {
     return (
-      this.config.baseUrl + (path.toString().startsWith("/") ? "" : "/") + path
-    );
+      this.config.baseUrl + (path.toString().startsWith('/') ? '' : '/') + path.toString()
+    )
   }
 
-  async fetch(url: string | URL, options?: IFetchInit) {
+  async fetch (url: string | URL, options?: IFetchInit): Promise<any> {
     const requestInit = {
       headers: {},
       ...options,
-      body: options?.body ? JSON.stringify(options.body) : null,
-    };
+      body: options?.body != null ? JSON.stringify(options.body) : null
+    }
 
-    if (requestInit.method && requestInit.method.toUpperCase() !== "GET") {
-      requestInit.headers["Content-Type"] = "application/json";
+    if (requestInit.method != null && requestInit.method !== '' && requestInit.method.toUpperCase() !== 'GET') {
+      requestInit.headers['Content-Type'] = 'application/json'
     }
 
     // собираем url
-    url = this.makeUrl(url);
+    url = this.makeUrl(url)
 
-    if (this.config.authType === "OAUTH") {
+    if (this.config.authType === 'OAUTH') {
       // получаем токен из ОП
-      if (!this.oauthToken || this.oauthToken.expired()) {
+      if (this.oauthToken == null || this.oauthToken.expired()) {
         // authorization code flow
         if (
-          this.OAuth.options.authorizationUri &&
-          this.OAuth.options.redirectUri
+          this.OAuth.options.authorizationUri != null &&
+          this.OAuth.options.redirectUri != null
         ) {
-          if (!window.location.href.match(/code/)) {
+          if (window.location.href.match(/code/) == null) {
             // let uri = await
-            window.location.href = this.OAuth.code.getUri();
+            window.location.href = this.OAuth.code.getUri()
           } else {
             this.oauthToken = await this.OAuth.code.getToken(
               window.location.search
-            );
-            if (this.oauthToken) {
+            )
+            if (this.oauthToken != null) {
               localStorage.setItem(
-                "OP_OAUTH_ACCESS_TOKEN",
+                'OP_OAUTH_ACCESS_TOKEN',
                 this.oauthToken.accessToken
-              );
+              )
               localStorage.setItem(
-                "OP_OAUTH_REFRESH_TOKEN",
+                'OP_OAUTH_REFRESH_TOKEN',
                 this.oauthToken.refreshToken
-              );
+              )
             }
 
             // const url = new URL (window.location.href)
             // url.searchParams.delete('code');
             // history.pushState(null, null, url.href)
           }
-        }
-        // credential flow
-        else {
-          this.oauthToken = await this.OAuth.credentials.getToken();
+        } else {
+          // credential flow
+          this.oauthToken = await this.OAuth.credentials.getToken()
         }
       }
 
       // подписываем опции запроса заголовком Authorization
       const signedOptions = this.oauthToken?.sign({
         url,
-        ...requestInit,
-      } as any);
-      requestInit.headers = signedOptions.headers;
+        ...requestInit
+      } as any)
+      requestInit.headers = signedOptions.headers
     } else {
-      const apikey = this.config.apiKeyOptions?.getApiKey();
-      requestInit.headers["Authorization"] =
-        "Basic " + base64Encode("apikey:" + apikey);
+      const apikey = this.config.apiKeyOptions?.getApiKey()
+      requestInit.headers.Authorization =
+        'Basic ' + base64Encode('apikey:' + apikey)
     }
 
-    // выполняем запрос
-    const emit = this.emitter.emit(this.onBeforeRequest.name, {
+    this.emitter.emit(this.onBeforeRequest.name, {
       url,
-      ...requestInit,
-    });
-    const response = await fetch(url, requestInit);
+      ...requestInit
+    })
+    // выполняем запрос
+    const response = await fetch(url, requestInit)
     // let resultAsText = await response.text();
-    let result;
+    let result
     // парсим ответ
     if (
-      response.headers.get("content-type") ===
-      "application/hal+json; charset=utf-8"
+      response.headers.get('content-type') ===
+      'application/hal+json; charset=utf-8'
     ) {
       try {
-        result = await response.json();
+        result = await response.json()
       } catch (err) {
-        const resonseText = await response.text();
-        throw new Error(resonseText);
+        const resonseText = await response.text()
+        throw new Error(resonseText)
       }
-      if (result._type === `Error`) {
-        let message = `${response.status} [${result.errorIdentifier}] ${result.message}`;
-        if (result?._embedded?.errors?.length) {
+      if (result._type === 'Error') {
+        let message = `${response.status} [${result.errorIdentifier}] ${result.message}`
+        if (result?._embedded?.errors?.length > 0) {
           message +=
-            " " +
+            ' ' +
             Object.values(result._embedded.errors)
               .map(
                 (eachError: any) =>
                   eachError._embedded.details.attribute +
-                  ": " +
+                  ': ' +
                   eachError.message
               )
-              .join(" ");
+              .join(' ')
         }
-        const error = new Error(message);
-        throw error;
+        const error = new Error(message)
+        throw error
       }
     }
-    return result;
+    return result
   }
 
   async get<T extends BaseEntityAny>(
-    T: any,
+    Type: any,
     id: number | string | bigint | IEndpoint
   ): Promise<T> {
-    const result = new T(id);
-    return this.refresh(result);
+    const result = new Type(id)
+    return await this.refresh(result)
   }
 
   async refresh<T extends BaseEntity>(entity: T): Promise<T> {
-    const body = await this.fetch(entity.self.href || "");
-    entity.fill(body);
-    entity._links = {};
-    return entity;
+    const body = await this.fetch(entity.self.href ?? '')
+    entity.fill(body)
+    entity._links = {}
+    return entity
   }
 
   async getPage<T extends BaseEntityAny>(
-    T: any,
+    Type: any,
     options: GetManyOptions = {},
     stat?: ICollectionStat,
     sema?: Sema
-  ): Promise<EntityCollectionElement<T>[]> {
-    const elements: EntityCollectionElement<T>[] = [];
+  ): Promise<Array<EntityCollectionElement<T>>> {
+    const elements: Array<EntityCollectionElement<T>> = []
 
     const query = Object.entries(options)
       .map(([key, value]) => {
-        if (key === "filters") {
-          value = JSON.stringify(value);
-        } else if (key === "sortBy" && value !== undefined) {
+        if (key === 'filters') {
+          value = JSON.stringify(value)
+        } else if (key === 'sortBy' && value !== undefined) {
           value = JSON.stringify([
-            ...(value as NonNullable<GetAllOptions["sortBy"]>),
-          ]);
+            ...(value as NonNullable<GetAllOptions['sortBy']>)
+          ])
         }
-        return key + "=" + value;
+        return key + '=' + value
       })
-      .join("&");
-    await sema?.acquire();
+      .join('&')
+    await sema?.acquire()
     try {
-      const fetchResult = await this.fetch(`${options.url || T.url}?${query}`);
+      const fetchResult = await this.fetch(`${options.url ?? Type.url}?${query}`)
       elements.push(
         ...fetchResult._embedded.elements.map(
-          (eachElement: any) => new T(eachElement)
+          (eachElement: any) => new Type(eachElement)
         )
-      );
+      )
 
-      if (stat) {
-        stat.total = fetchResult.total;
-        stat.pageSize = fetchResult.pageSize;
-        stat.offset = fetchResult.offset;
+      if (stat != null) {
+        stat.total = fetchResult.total
+        stat.pageSize = fetchResult.pageSize
+        stat.offset = fetchResult.offset
       }
     } finally {
-      sema?.release();
+      sema?.release()
     }
 
-    return elements;
+    return elements
   }
 
   /** alias getPage */
   async getMany<T extends BaseEntityAny>(
-    T: any,
+    Type: any,
     options: GetManyOptions = {},
     stat?: ICollectionStat
-  ): Promise<EntityCollectionElement<T>[]> {
-    return this.getPage(T, options, stat);
+  ): Promise<Array<EntityCollectionElement<T>>> {
+    return await this.getPage(Type, options, stat)
   }
   // async getMany<T extends BaseEntityAny>(
   //   T: any,
@@ -344,54 +342,56 @@ export class EntityManager {
   // }
 
   async getAll<T extends BaseEntityAny>(
-    T: any,
+    Type: any,
     options: GetAllOptions = {}
   ): Promise<Array<EntityCollectionElement<T>>> {
-    let elements: Array<EntityCollectionElement<T>> = [];
-    const pageSize = options.pageSize || this.config.pageSize;
-    const stat = new CollectionStat();
+    let elements: Array<EntityCollectionElement<T>> = []
+    const pageSize = options.pageSize ?? this.config.pageSize
+    const stat = new CollectionStat()
     const firstPageElements = await this.getPage<T>(
-      T,
+      Type,
       {
         ...options,
         pageSize,
-        offset: 1,
+        offset: 1
       },
       stat
-    );
+    )
 
-    elements = elements.concat(firstPageElements);
+    elements = elements.concat(firstPageElements)
 
     if (firstPageElements.length < stat.total) {
       const sema = new Sema(
-        options.threads || this.config.threads || 1, // Allow N concurrent async calls
+        options.threads ?? this.config.threads ?? 1, // Allow N concurrent async calls
         {
-          capacity: 20, // Prealloc space for M tokens
+          capacity: 100 // Prealloc space for M tokens
         }
-      );
+      )
 
-      const pageCount = Math.ceil(stat.total / stat.pageSize);
+      const pageCount = Math.ceil(stat.total / stat.pageSize)
       const pages = await Promise.all(
-        Array.from({ length: pageCount - 1 }, (_, i) => i + 2).map((offset) =>
-          this.getPage<T>(
-            T,
+        Array.from({ length: pageCount - 1 }, (_, i) => i + 2).map(async (offset) => {
+          return await this.getPage<T>(
+            Type,
             {
               ...options,
               pageSize: stat.pageSize,
-              offset,
+              offset
             },
             undefined,
             sema
           )
+        }
+
         )
-      );
+      )
 
       pages.forEach((page) => {
-        elements = elements.concat(page);
-      });
+        elements = elements.concat(page)
+      })
     }
 
-    return elements;
+    return elements
     // return await this.getMany<T>(T, {
     //   pageSize: this.config.pageSize,
     //   ...options,
@@ -401,135 +401,132 @@ export class EntityManager {
 
   async patch<T extends BaseEntity>(
     entity: T,
-    fieldPaths?: Array<keyof T["body"] | string>,
+    fieldPaths?: Array<keyof T['body'] | string>,
     notify?: boolean
   ): Promise<T> {
-    const isWP = entity instanceof WP;
+    const isWP = entity instanceof WP
     const patch = JSON.parse(
       JSON.stringify(
-        fieldPaths
-          ? entity.bodyScope(isWP ? [...fieldPaths, "lockVersion"] : fieldPaths)
+        (fieldPaths != null)
+          ? entity.bodyScope(isWP ? [...fieldPaths, 'lockVersion'] : fieldPaths)
           : entity.body
       )
-    );
-    delete patch.createdAt;
-    delete patch.updatedAt;
+    )
+    delete patch.createdAt
+    delete patch.updatedAt
     if (entity instanceof WP) {
       if (patch.lockVersion === undefined || patch.lockVersion === null) {
-        const actualCopy = await this.get<WP>(entity.constructor, entity.id);
-        patch.lockVersion = actualCopy.body.lockVersion;
+        const actualCopy = await this.get<WP>(entity.constructor, entity.id)
+        patch.lockVersion = actualCopy.body.lockVersion
       }
     }
 
-    const url = new URL(entity.self.href || "");
-    if (notify !== undefined)
-      url.searchParams.append("notify", JSON.stringify(notify));
+    const url = new URL(entity.self.href ?? '')
+    if (notify !== undefined) { url.searchParams.append('notify', JSON.stringify(notify)) }
 
     const patchedBody = await this.fetch(url, {
-      method: "PATCH",
-      body: patch,
-    });
-    if (!fieldPaths || fieldPaths.length == 0) {
-      entity.body = patchedBody;
+      method: 'PATCH',
+      body: patch
+    })
+    if ((fieldPaths == null) || fieldPaths.length === 0) {
+      entity.body = patchedBody
     } else {
-      if (entity instanceof WP)
-        entity.body.lockVersion = patchedBody.lockVersion;
+      if (entity instanceof WP) { entity.body.lockVersion = patchedBody.lockVersion }
 
-      entity.body["updatedAt"] = patchedBody.updatedAt;
+      entity.body.updatedAt = patchedBody.updatedAt;
 
       // updating embedded
-      ((fieldPaths as string[]) || [])
-        .filter((fieldPath) => fieldPath.startsWith("_links."))
+      ((fieldPaths as string[]) ?? [])
+        .filter((fieldPath) => fieldPath.startsWith('_links.'))
         .map((fieldPaths) => fieldPaths.substr(7))
         .forEach(
           (fieldName) =>
             (entity.body._embedded = Object.assign(
-              entity.body._embedded || {},
+              entity.body._embedded ?? {},
               { [fieldName]: patchedBody._embedded[fieldName] }
             ))
-        );
+        )
     }
-    return entity;
+    return entity
   }
 
   async create<T extends BaseEntity>(
     entity: T,
-    options?: { url?: string; notify?: boolean }
+    options?: { url?: string, notify?: boolean }
   ): Promise<T> {
-    const url = new URL(options?.url || entity.constructor.url);
-    if (options?.notify !== undefined)
-      url.searchParams.append("notify", JSON.stringify(options?.notify));
+    const url = new URL(options?.url ?? entity.constructor.url)
+    if (options?.notify !== undefined) { url.searchParams.append('notify', JSON.stringify(options?.notify)) }
 
     const createdBody = await this.fetch(url, {
-      method: "POST",
-      body: entity.body,
-    });
-    entity.body = createdBody;
-    return entity;
+      method: 'POST',
+      body: entity.body
+    })
+    entity.body = createdBody
+    return entity
   }
 
   public async first<T extends BaseEntity>(
-    T: any,
+    Type: any,
     filters?: EntityFilterItem[]
   ): Promise<EntityCollectionElement<T> | null> {
-    const result = await this.getMany<T>(T, {
+    const result = await this.getMany<T>(Type, {
       pageSize: 1,
-      filters,
-    });
+      filters
+    })
 
-    return result.length > 0 ? result[0] : null;
+    return result.length > 0 ? result[0] : null
   }
 
   public async findOrFail<T extends BaseEntityAny>(
-    T: any,
+    Type: any,
     id: number | string | bigint | IEndpoint
   ): Promise<T> {
-    return this.get(T, id);
+    return await this.get(Type, id)
   }
 
   public async findBy<T extends BaseEntity>(
-    T: any,
-    key: keyof T["body"] | string,
+    Type: any,
+    key: keyof T['body'] | string,
     value: any
   ): Promise<EntityCollectionElement<T> | null> {
     // filter[UserExtend.fieldExternalId()] = { operator: '=', values: [id] }
     const filter = {
-      [key]: { operator: "=" as FilterOperatorType, values: [value] },
-    };
-    return await this.first<T>(T, [filter]);
+      [key]: { operator: '=' as FilterOperatorType, values: [value] }
+    }
+    return await this.first<T>(Type, [filter])
   }
 
   /**
    * validate data
    */
   async validate<T extends WP>(entity: T): Promise<T> {
-    const url = entity.id
+    const url = entity.id > 0
       ? entity.constructor.url + `/${entity.id}/form`
-      : entity.constructor.url + `/form`;
+      : entity.constructor.url + '/form'
     const form = await this.fetch(url, {
-      method: "POST",
-      body: entity.body,
-    });
-    const result = form._embedded.validationErrors;
-    console.log(result);
-    return result;
+      method: 'POST',
+      body: entity.body
+    })
+    const result = form._embedded.validationErrors
+    console.log(result)
+    return result
   }
 }
 
-export function jsonLogRequestToConsole(request: FetchRequest) {
+export function jsonLogRequestToConsole (request: FetchRequest): void {
   console.debug(
     JSON.stringify({
-      level: "DEBUG",
-      message: EntityManager.name + ".onBeforeRequest",
-      request,
+      level: 'DEBUG',
+      message: EntityManager.name + '.onBeforeRequest',
+      request
     })
-  );
+  )
 }
 
-var entityManager = new EntityManager();
+const entityManager = new EntityManager()
 
-entityManager.onBeforeRequest(jsonLogRequestToConsole);
+entityManager.onBeforeRequest(jsonLogRequestToConsole)
 
-EntityManager.instance = entityManager;
+EntityManager.instance = entityManager
 
-export default entityManager;
+export default entityManager

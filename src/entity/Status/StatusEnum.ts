@@ -5,4 +5,4 @@ enum StatusEnum {
   'Rejected' = 14,
 }
 
-export default StatusEnum;
+export default StatusEnum

@@ -1,5 +1,5 @@
-import BaseEntity from "../Abstract/BaseEntity";
-import ITypeBody from "./ITypeBody";
+import BaseEntity from '../Abstract/BaseEntity'
+import type ITypeBody from './ITypeBody'
 
 export default class Type extends BaseEntity {
   // ['constructor']: typeof Type

@@ -1,6 +1,6 @@
-import IStatusBody from "./IStatusBody";
-import BaseEntity from "../Abstract/BaseEntity";
-import Field from "../decorators/Field";
+import type IStatusBody from './IStatusBody'
+import BaseEntity from '../Abstract/BaseEntity'
+import Field from '../decorators/Field'
 
 export default class Status extends BaseEntity {
   // ['constructor']: typeof Status
@@ -8,14 +8,13 @@ export default class Status extends BaseEntity {
   static url = '/api/v3/statuses'
 
   @Field('name', String)
-  name: string | null
+    name: string | null
 
   @Field('externalId', String)
-  externalId: string
+    externalId: string
 
   @Field('isClosed', Boolean)
-  isClosed:boolean
-  
-  body: IStatusBody
+    isClosed: boolean
 
+  body: IStatusBody
 }

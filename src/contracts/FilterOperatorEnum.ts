@@ -1,14 +1,14 @@
 /** see https://www.openproject.org/docs/api/filters/ */
 
-export enum FilterOperatorEnum  {
-  /**are equal to one of the given value(s) */
+export enum FilterOperatorEnum {
+  /** are equal to one of the given value(s) */
   IN = '=',
-  
+
   ALL_VALUES = '&=',
-  
+
 }
 
-export type FilterOperatorType = 
+export type FilterOperatorType =
 '=' // are equal to one of the given value(s)
 | '&=' // are containing all of the given value(s)
 | '!' // are not equal one of the given value(s)

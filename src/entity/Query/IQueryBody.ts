@@ -1,11 +1,10 @@
-import { IEndpoint } from "../Abstract/IEndpoint";
-import { IPayloadEndpoint } from "../Abstract/IPayloadEndpoint";
-import IAbstractBody from "../Abstract/IAbstractBody";
+import { type IEndpoint } from '../Abstract/IEndpoint'
+import type IAbstractBody from '../Abstract/IAbstractBody'
 
 export default interface IQueryBody extends IAbstractBody {
-  _type?: "Query";
-  name: string; 
+  _type?: 'Query'
+  name: string
   _links: {
-    self: IEndpoint;
-  };
+    self: IEndpoint
+  }
 }

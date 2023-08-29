@@ -1,10 +1,8 @@
-import { FilterOperatorType } from "./FilterOperatorEnum";
+import { type FilterOperatorType } from './FilterOperatorEnum'
 
 export interface EntityFieldFilter {
-  operator: FilterOperatorType;
-  values?: any[] | any;
+  operator: FilterOperatorType
+  values?: any[] | any
 }
 
-export interface EntityFilterItem {
-  [field: string]: EntityFieldFilter;
-}
+export type EntityFilterItem = Record<string, EntityFieldFilter>

@@ -1,10 +1,10 @@
-export default function (str:string):Date | null {
-  if (!str){
+export default function (str: string): Date | null {
+  if (str === '') {
     return null
   }
-  let timestamp= Date.parse(str)
-  if (!str.endsWith('Z')){
-    timestamp+= new Date().getTimezoneOffset()*60000
+  let timestamp = Date.parse(str)
+  if (!str.endsWith('Z')) {
+    timestamp += new Date().getTimezoneOffset() * 60000
   }
   return new Date(timestamp)
 }
