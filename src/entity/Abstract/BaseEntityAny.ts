@@ -1,7 +1,8 @@
 import {
+  ICollectionStat,
   EntityManager,
   GetAllOptions,
-  GetManyOptions
+  GetManyOptions,
 } from "../../EntityManager/EntityManager";
 import User from "../User/User";
 import str2date from "../utils/str2date";
@@ -298,10 +299,20 @@ export default abstract class BaseEntityAny<
     return await EntityManager.instance.getAll<T>(this, options);
   }
 
+  /** alias getPage */
   public static async getMany<T extends BaseEntityAny>(
     this: { new (): T },
-    options?: GetManyOptions
+    options?: GetManyOptions,
+    stat?: ICollectionStat
   ) {
-    return await EntityManager.instance.getMany<T>(this, options);
+    return await EntityManager.instance.getPage<T>(this, options, stat);
+  }
+
+  public static async getPage<T extends BaseEntityAny>(
+    this: { new (): T },
+    options?: GetManyOptions,
+    stat?: ICollectionStat
+  ) {
+    return await EntityManager.instance.getPage<T>(this, options, stat);
   }
 }

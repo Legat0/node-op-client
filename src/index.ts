@@ -1,6 +1,6 @@
 import entityManager, {
   EntityManager,
-  AuthTypeEnum,
+  AuthTypeEnum  
 } from "./EntityManager/EntityManager";
 
 import BaseEntityAny from "./entity/Abstract/BaseEntityAny";
@@ -28,14 +28,14 @@ import StatusEnum from "./entity/Status/StatusEnum";
 
 export { type EntityFilterItem } from "./contracts/EntityFilterItem";
 
-export { type EntityManagerConfig } from "./EntityManager/EntityManager";
+export { type EntityManagerConfig, type ICollectionStat, CollectionStat  } from "./EntityManager/EntityManager";
 export {
   type LinkEntity,
   type EntityCollectionElement,
 } from "./entity/Abstract/BaseEntityAny";
 
 export {
-  EntityManager,
+  EntityManager,  
   AuthTypeEnum,
   BaseEntityAny,
   BaseEntity,

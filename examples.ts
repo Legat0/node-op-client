@@ -16,8 +16,10 @@ import {
   User,
   QueryFilterInstanceSchema,
   Query,
+  CollectionStat,
 } from "./src";
 import _ from "lodash";
+
 
 dotenv.config();
 
@@ -91,6 +93,7 @@ EntityManager.instance.useConfig({
     clientId: process.env.OP_CLIENT_ID,
     clientSecret: process.env.OP_CLIENT_SECRET,
   },
+  threads:1
 });
 
 /** Проект */
@@ -246,6 +249,22 @@ async function testGetWP() {
   });
 }
 
+async function testGetAll() {
+  const stat = new CollectionStat()
+  const list = await WPExt.getMany({pageSize: 20, offset: 1}, stat);
+
+  console.table(list.map(x=> {
+    return {id: x.id}
+  }));
+  // console.table(_.pick(list, ['id']));
+  console.table(stat);
+
+  const allWP = await WPExt.getAll({pageSize: 100, threads: 5});
+  console.table({total: allWP.length})
+}
+
+
+
 (async function main() {
-  await testGetWP();
+  await testGetAll();
 })();

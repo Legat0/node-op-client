@@ -9,6 +9,7 @@ import WP from "../entity/WP/WP";
 import EventEmitter from "events";
 import { EntityFilterItem } from "../contracts/EntityFilterItem";
 import { FilterOperatorType } from "../contracts/FilterOperatorEnum";
+import { Sema } from "async-sema";
 
 interface IFetchInit extends Omit<RequestInit, "body"> {
   headers?: Record<string, string>;
@@ -43,10 +44,28 @@ export interface EntityManagerConfig {
   };
   /** default pageSize for getAll */
   pageSize?: number;
+  /** default count threads for getAll  */
+  threads?: number;
 }
 
 export interface FetchRequest extends RequestInit {
   url: string;
+}
+
+export interface ICollectionStat {
+  total: number;
+  pageSize: number;
+  offset: number;
+}
+export class CollectionStat implements ICollectionStat {
+  public total: number;
+  public pageSize: number;
+  public offset: number;
+  constructor() {
+    this.total = 0;
+    this.pageSize = 0;
+    this.offset = 0;
+  }
 }
 
 export interface GetAllOptions {
@@ -59,9 +78,9 @@ export interface GetAllOptions {
   url?: string;
   /** limit */
   pageSize?: number;
+  threads?: number;
 }
 export interface GetManyOptions extends GetAllOptions {
-  all?: boolean;
   /** page */
   offset?: number;
 }
@@ -233,49 +252,151 @@ export class EntityManager {
     return entity;
   }
 
-  async getMany<T extends BaseEntityAny>(
+  async getPage<T extends BaseEntityAny>(
     T: any,
-    options: GetManyOptions = {}
+    options: GetManyOptions = {},
+    stat?: ICollectionStat,
+    sema?: Sema
   ): Promise<EntityCollectionElement<T>[]> {
-    const result: EntityCollectionElement<T>[] = [];
-    let total;
-    for (
-      let startOffset = options.offset || 1, offset = startOffset;
-      offset === startOffset || (options.all && result.length < total); // TODO parallel requests for getAll ?
-      offset++
-    ) {
-      const query = Object.entries({ ...options, offset })
-        .map(([key, value]) => {
-          if (key === "filters") {
-            value = JSON.stringify(value);
-          } else if (key === "sortBy" && value !== undefined) {
-            value = JSON.stringify([
-              ...(value as NonNullable<GetAllOptions["sortBy"]>),
-            ]);
-          }
-          return key + "=" + value;
-        })
-        .join("&");
+    const elements: EntityCollectionElement<T>[] = [];
+
+    const query = Object.entries(options)
+      .map(([key, value]) => {
+        if (key === "filters") {
+          value = JSON.stringify(value);
+        } else if (key === "sortBy" && value !== undefined) {
+          value = JSON.stringify([
+            ...(value as NonNullable<GetAllOptions["sortBy"]>),
+          ]);
+        }
+        return key + "=" + value;
+      })
+      .join("&");
+    await sema?.acquire();
+    try {
       const fetchResult = await this.fetch(`${options.url || T.url}?${query}`);
-      result.push(
+      elements.push(
         ...fetchResult._embedded.elements.map(
           (eachElement: any) => new T(eachElement)
         )
       );
-      total = fetchResult.total;
+
+      if (stat) {
+        stat.total = fetchResult.total;
+        stat.pageSize = fetchResult.pageSize;
+        stat.offset = fetchResult.offset;
+      }
+    } finally {
+      sema?.release();
     }
-    return result;
+
+    return elements;
   }
+
+  /** alias getPage */
+  async getMany<T extends BaseEntityAny>(
+    T: any,
+    options: GetManyOptions = {},
+    stat?: ICollectionStat
+  ): Promise<EntityCollectionElement<T>[]> {
+    return this.getPage(T, options, stat);
+  }
+  // async getMany<T extends BaseEntityAny>(
+  //   T: any,
+  //   options: GetManyOptions = {},
+  //   stat?: CollectionStat
+  // ): Promise<EntityCollectionElement<T>[]> {
+  //   const result: EntityCollectionElement<T>[] = [];
+  //   let total;
+  //   let pageSize;
+  //   for (
+  //     let startOffset = options.offset || 1, offset = startOffset;
+  //     offset === startOffset || (options.all && result.length < total); // TODO parallel requests for getAll ?
+  //     offset++
+  //   ) {
+  //     const query = Object.entries({ ...options, offset })
+  //       .map(([key, value]) => {
+  //         if (key === "filters") {
+  //           value = JSON.stringify(value);
+  //         } else if (key === "sortBy" && value !== undefined) {
+  //           value = JSON.stringify([
+  //             ...(value as NonNullable<GetAllOptions["sortBy"]>),
+  //           ]);
+  //         }
+  //         return key + "=" + value;
+  //       })
+  //       .join("&");
+  //     const fetchResult = await this.fetch(`${options.url || T.url}?${query}`);
+  //     result.push(
+  //       ...fetchResult._embedded.elements.map(
+  //         (eachElement: any) => new T(eachElement)
+  //       )
+  //     );
+  //     total = fetchResult.total;
+  //     pageSize = fetchResult.pageSize;
+  //   }
+  //   if (stat) {
+  //     stat.total = total;
+  //     stat.pageSize = pageSize;
+  //   }
+
+  //   return result;
+  // }
 
   async getAll<T extends BaseEntityAny>(
     T: any,
     options: GetAllOptions = {}
   ): Promise<Array<EntityCollectionElement<T>>> {
-    return await this.getMany<T>(T, {
-      pageSize: this.config.pageSize,
-      ...options,
-      all: true,
-    });
+    let elements: Array<EntityCollectionElement<T>> = [];
+    const pageSize = options.pageSize || this.config.pageSize;
+    const stat = new CollectionStat();
+    const firstPageElements = await this.getPage<T>(
+      T,
+      {
+        ...options,
+        pageSize,
+        offset: 1,
+      },
+      stat
+    );
+
+    elements = elements.concat(firstPageElements);
+
+    if (firstPageElements.length < stat.total) {
+      const sema = new Sema(
+        options.threads || this.config.threads || 1, // Allow N concurrent async calls
+        {
+          capacity: 20, // Prealloc space for M tokens
+        }
+      );
+
+      const pageCount = Math.ceil(stat.total / stat.pageSize);
+      const pages = await Promise.all(
+        Array.from({ length: pageCount - 1 }, (_, i) => i + 2).map((offset) =>
+          this.getPage<T>(
+            T,
+            {
+              ...options,
+              pageSize: stat.pageSize,
+              offset,
+            },
+            undefined,
+            sema
+          )
+        )
+      );
+
+      pages.forEach((page) => {
+        elements = elements.concat(page);
+      });
+    }
+
+    return elements;
+    // return await this.getMany<T>(T, {
+    //   pageSize: this.config.pageSize,
+    //   ...options,
+    //   all: true,
+    // });
   }
 
   async patch<T extends BaseEntity>(
