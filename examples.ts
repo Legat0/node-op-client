@@ -206,10 +206,10 @@ async function testQueryForm (): Promise<void> {
   q.name = 'default'
   q.project = p
 
-  const form = await Query.form(q)
+  const queryForm = await q.form() // OR  Query.form(q)
 
   console.table(
-    form.visibleFilterSchemas.map((x) => {
+    queryForm.visibleFilterSchemas.map((x) => {
       return {
         id: x.allowedFilterValue.id,
         title: x.allowedFilterValue.self.title,
@@ -217,24 +217,32 @@ async function testQueryForm (): Promise<void> {
       }
     })
   )
-
-  let schema = form.visibleFilterSchemas.find((x) => x.id === 'customField15')
+  // Схема для поля Заказчик + оператор "="
+  let schema = queryForm.visibleFilterSchemas.find((x) => x.id === p.fieldMap.contact_id)
   schema = schema?.resultingSchema('=')
   console.log({
     id: schema?.id,
+    title: schema?.self.title,
     values: schema?.values?.type,
     allowedValues: schema?.allowedValues?.length
   })
-
-  schema = form.visibleFilterSchemas
+  // Схема для поля author + оператор "="
+  schema = queryForm.visibleFilterSchemas
     .find((x) => x.id === 'author')
     ?.resultingSchema('=')
   console.log({
     id: schema?.id,
+    title: schema?.self.title,
     values: schema?.values?.type,
     allowedValues: schema?.allowedValues?.length
   })
-  // _.pick(x, "allowedFilterValue.id", "allowedFilterValue.self.title")));
+  // Список доступных значений для boards
+  schema = queryForm.visibleFilterSchemas
+    .find((x) => x.id === p.fieldMap.boards)
+    ?.resultingSchema('=')
+  console.table(schema?.allowedValues?.map(x => {
+    return { id: x.id, value: x.value }
+  }))
 }
 
 async function testUpdateWP (): Promise<void> {
@@ -291,7 +299,7 @@ async function testGetAll (): Promise<void> {
 }
 
 async function main (): Promise<void> {
-  await testGetAll()
+  await testQueryForm()
 }
 
 main().catch(console.error)

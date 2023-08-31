@@ -27,4 +27,13 @@ export default class Query extends BaseEntity {
 
     return new QueryForm(result)
   }
+
+  public async form (): Promise<QueryForm> {
+    const body = await this.getService().fetch(this.id > 0 ? this.self.href + '/form' : QueryForm.url, {
+      method: 'POST',
+      body: this.body
+    })
+
+    return new QueryForm(body)
+  }
 }

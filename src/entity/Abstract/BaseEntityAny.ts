@@ -105,13 +105,13 @@ export default abstract class BaseEntityAny<
         this.self = init as IEndpoint
       } else {
         this.fill(init)
-        // FIXME зачем это нужно?
-        // if (this.id != null && !this.self) {
-        //   this.id = this.id
-        // }
-        // if (this.self && !this.id) {
-        //   this.self = this.self
-        // }
+        // Init ID and href
+        if (!(this.body.id === '' || this.body.id === 0) && this.self.href == null) {
+          this.id = this.body.id
+        }
+        if (this.self.href != null && (this.body.id === '' || this.body.id === 0)) {
+          this.self = this.body._links.self
+        }
       }
     }
   }
@@ -163,7 +163,8 @@ export default abstract class BaseEntityAny<
   set self (value: IEndpoint) {
     this.body._links.self = value
     const id = (value.href != null) ? BaseEntityAny.idFromLink(value.href) : ''
-    this.body.id = (Number.parseInt(id) ?? id) as IdType
+    const intId = Number.parseInt(id)
+    this.body.id = (intId > 0 ? intId : id) as IdType
   }
 
   get bodyCustomFields (): Map<string, any> {
