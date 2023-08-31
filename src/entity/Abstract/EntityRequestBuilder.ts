@@ -4,6 +4,7 @@ import {
 } from '../../contracts/EntityFilterItem'
 import {
   EntityManager,
+  type ICollectionStat,
   type GetAllOptions,
   type GetManyOptions
 } from '../../EntityManager/EntityManager'
@@ -14,7 +15,9 @@ import { type EntityCollectionElement } from './BaseEntityAny'
 export default class EntityRequestBuilder<T extends BaseEntity> {
   private service: EntityManager
   private readonly entity: new () => T
-  private readonly requstParams: GetManyOptions & Required<Pick<GetManyOptions, 'filters'>>
+  private readonly requstParams: GetManyOptions &
+  Required<Pick<GetManyOptions, 'filters'>>
+
   private mapField?: MapFieldType
 
   constructor (
@@ -105,7 +108,9 @@ export default class EntityRequestBuilder<T extends BaseEntity> {
   }
 
   public sortBy (column: string, direction: 'asc' | 'desc' = 'asc'): this {
-    if (this.requstParams.sortBy === undefined) { this.requstParams.sortBy = new Map() }
+    if (this.requstParams.sortBy === undefined) {
+      this.requstParams.sortBy = new Map()
+    }
 
     column = this.mapField?.[String(column)] ?? column
     this.requstParams.sortBy.set(column, direction)
@@ -116,8 +121,12 @@ export default class EntityRequestBuilder<T extends BaseEntity> {
     return await this.service.first<T>(this.entity, this.requstParams.filters)
   }
 
-  public async getAll (options?: GetAllOptions): Promise<Array<EntityCollectionElement<T>>> {
-    const resultFilters = this.requstParams.filters.concat(options?.filters ?? [])
+  public async getAll (
+    options?: GetAllOptions
+  ): Promise<Array<EntityCollectionElement<T>>> {
+    const resultFilters = this.requstParams.filters.concat(
+      options?.filters ?? []
+    )
     return await this.service.getAll<T>(this.entity, {
       ...this.requstParams,
       ...options,
@@ -125,12 +134,21 @@ export default class EntityRequestBuilder<T extends BaseEntity> {
     })
   }
 
-  public async getMany (options?: GetManyOptions): Promise<Array<EntityCollectionElement<T>>> {
-    const resultFilters = this.requstParams.filters.concat(options?.filters ?? [])
-    return await this.service.getMany<T>(this.entity, {
-      ...this.requstParams,
-      ...options,
-      filters: resultFilters
-    })
+  public async getMany (
+    options?: GetManyOptions,
+    stat?: ICollectionStat
+  ): Promise<Array<EntityCollectionElement<T>>> {
+    const resultFilters = this.requstParams.filters.concat(
+      options?.filters ?? []
+    )
+    return await this.service.getMany<T>(
+      this.entity,
+      {
+        ...this.requstParams,
+        ...options,
+        filters: resultFilters
+      },
+      stat
+    )
   }
 }

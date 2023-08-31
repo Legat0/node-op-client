@@ -202,6 +202,8 @@ export class EntityManager {
     // выполняем запрос
     const response = await fetch(url, requestInit)
     // let resultAsText = await response.text();
+    if (!response.ok) throw new Error(response.statusText)
+
     let result
     // парсим ответ
     if (
@@ -231,6 +233,8 @@ export class EntityManager {
         const error = new Error(message)
         throw error
       }
+    } else {
+      throw new Error('Invalid content-type')
     }
     return result
   }

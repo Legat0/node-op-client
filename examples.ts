@@ -57,6 +57,10 @@ class WPExt extends WP {
   @LinkArray('marks', CustomOption)
   public linkMarks: Array<LinkEntity<CustomOption>>
 
+  get linkMarksGetter (): Array<LinkEntity<CustomOption>> {
+    return this.getLinkArray('marks', CustomOption) ?? []
+  }
+
   @Field('stage_date_finish', String)
   public stage_date_finish?: string
 
@@ -72,7 +76,15 @@ class WPExt extends WP {
   get marks (): Mark[] {
     return this.linkMarks
       .map((x) => x.parseSelf<Mark>())
-      .filter((x): x is Mark => (x != null))
+      .filter((x): x is Mark => x != null)
+  }
+
+  get marksGetter (): Mark[] {
+    return (
+      this.linkMarksGetter
+        ?.map((x) => x.parseSelf<Mark>())
+        .filter((x): x is Mark => x != null) ?? []
+    )
   }
 
   get contact (): object | undefined {
@@ -110,9 +122,9 @@ async function testWP (): Promise<void> {
   wp.useMapField(p.fieldMap)
 
   console.log(p.fieldMap)
-
-  console.table(wp.linkMarks.map((x) => x.id))
+  console.table(wp.linkMarks, ['id'])
   console.table(wp.marks)
+  console.table(wp.marksGetter)
   console.table(wp.contact)
   console.log(wp.stage_date_finish, wp.task_date_finish)
 }
@@ -253,13 +265,27 @@ async function testGetAll (): Promise<void> {
   const stat = new CollectionStat()
   const list = await WPExt.getMany({ pageSize: 20, offset: 1 }, stat)
 
-  console.table(list.map(x => {
-    return { id: x.id }
-  }))
-  // console.table(_.pick(list, ['id']));
+  console.table(
+    list.map((x) => {
+      return { id: x.id }
+    })
+  )
   console.table(stat)
+  const list2 = await WPExt.request().addFilter('project', '=', Config.PROJECT_ID).addFilter('status', 'o').getMany({ pageSize: 20, offset: 1 }, stat)
+
+  console.table(
+    list2.map((x) => {
+      return { id: x.id }
+    })
+  )
+  console.table(stat)
+  // console.table(_.pick(list, ['id']));
+
   console.time('getAll')
-  const allWP = await WPExt.request().addFilter('project', '=', [Config.PROJECT_ID]).select(['*']).getAll({ pageSize: 100, threads: 10 })
+  const allWP = await WPExt.request()
+    .addFilter('project', '=', [Config.PROJECT_ID])
+    .select(['*'])
+    .getAll({ pageSize: 100, threads: 10 })
   console.timeEnd('getAll')
   console.table({ total: allWP.length })
 }
