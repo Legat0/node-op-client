@@ -14,10 +14,10 @@ function castValue (value: any, type?: any): any {
   }
 }
 
-export default function Field (name: string, type?: any) {
-  return function (target: BaseEntityAny, propertyKey: string | symbol): void {
+export default function Field (name?: string, type?: any) {
+  return function (target: BaseEntityAny, propertyKey: string): void {
     function getter (this: BaseEntityAny): any {
-      name = this.getFieldName(name)
+      name = this.getFieldName(name ?? propertyKey)
       if (name === '') return
       if (Object.prototype.hasOwnProperty.call(this.body, name)) {
         if (type === Date) {
@@ -31,7 +31,7 @@ export default function Field (name: string, type?: any) {
     }
 
     function setter (this: BaseEntityAny | BaseEntity, value: any): void {
-      name = this.getFieldName(name)
+      name = this.getFieldName(name ?? propertyKey)
       if (name === '') return
       const newValue = castValue(value)
       if (

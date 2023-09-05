@@ -16,17 +16,20 @@ import TypeEnum from '././entity/Type/TypeEnum'
 import User from './entity/User/User'
 import WP from './entity/WP/WP'
 import Query from './entity/Query/Query'
+import View from './entity/View/View'
 import QueryForm from './entity/Query/QueryForm'
 import QueryFilterInstanceSchema from './entity/Query/QueryFilterInstanceSchema'
 
 import Field from './entity/decorators/Field'
 import Link from './entity/decorators/Link'
 import Embedded from './entity/decorators/Embedded'
+import EmbeddedArray from './entity/decorators/EmbeddedArray'
 import JsonField from './entity/decorators/JsonField'
 import LinkArray from './entity/decorators/LinkArray'
 import StatusEnum from './entity/Status/StatusEnum'
 
 export { type EntityFilterItem } from './contracts/EntityFilterItem'
+export { ViewsTypeEnum } from './entity/View/IViewBody'
 
 export { type EntityManagerConfig, type ICollectionStat, CollectionStat } from './EntityManager/EntityManager'
 export {
@@ -47,12 +50,14 @@ export {
   Type,
   TypeEnum,
   WP,
+  View,
   Query,
   QueryForm,
   QueryFilterInstanceSchema,
   Link,
   Field,
   Embedded,
+  EmbeddedArray,
   JsonField,
   LinkArray,
   Duration,

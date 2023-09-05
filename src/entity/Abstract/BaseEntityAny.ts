@@ -76,6 +76,7 @@ export default abstract class BaseEntityAny<
   /**
    * Holds linked objects matched the body._links.
    */
+  // TODO зачем это? _links = body._links
   _links: Record<string, | BaseEntityAny
   | LinkEntity<BaseEntityAny>
   | BaseEntityAny[]
@@ -246,12 +247,38 @@ export default abstract class BaseEntityAny<
 
   public getField<T>(
     name: string,
-    type: new (...args: any[]) => T
+    Type: new (...args: any[]) => T
   ): T | undefined {
     name = this.getFieldName(name)
     if (name === '') return
     if (Object.prototype.hasOwnProperty.call(this.body, name)) {
-      return BaseEntityAny.convertToType(this.body[name], type)
+      return BaseEntityAny.convertToType(this.body[name], Type)
+    }
+  }
+
+  public getEmbedded<T>(
+    name: string,
+    Type: new (...args: any[]) => T
+  ): T | undefined {
+    name = this.getFieldName(name)
+    if (name === '') return
+    if (this.body._embedded != null && Object.prototype.hasOwnProperty.call(this.body._embedded, name)) {
+      return new Type(this.body._embedded[name])
+    }
+  }
+
+  public getEmbeddedArray<T>(
+    name: string,
+    Type: new (...args: any[]) => T
+  ): T[] | undefined {
+    name = this.getFieldName(name)
+    if (name === '') return
+    if (this.body._embedded != null && Object.prototype.hasOwnProperty.call(this.body._embedded, name)) {
+      if (Array.isArray(this.body._embedded[name])) {
+        return this.body._embedded[name].map((x: any) => new Type(x))
+      } else {
+        throw new Error(`_embedded[${name}] is not array`)
+      }
     }
   }
 
@@ -276,7 +303,7 @@ export default abstract class BaseEntityAny<
     }
   }
 
-  public makeUrl (path: string): string {
+  public makeUrl (path: string): URL {
     return this.getService().makeUrl(
       this.self.href + (path.toString().startsWith('/') ? '' : '/') + path
     )

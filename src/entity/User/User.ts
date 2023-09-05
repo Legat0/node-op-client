@@ -37,6 +37,6 @@ export default class User extends BaseEntity {
     avatar: string
 
   get avatarUrl (): string {
-    return this.getService().makeUrl(this.self.href + '/avatar')
+    return this.getService().makeUrl(this.self.href + '/avatar').toString()
   }
 }

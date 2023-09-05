@@ -90,4 +90,10 @@ export default abstract class BaseEntity extends BaseEntityAny<number> {
       return await this.create(options)
     }
   }
+
+  public async delete<Entity extends this>(
+    this: Entity
+  ): Promise<void> {
+    await this.getService().delete(this)
+  }
 }

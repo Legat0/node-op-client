@@ -50,7 +50,7 @@ export default class EntityRequestBuilder<T extends BaseEntity> {
   public addFilter (
     key: keyof T['body'] | string,
     operator: EntityFieldFilter['operator'],
-    values?: EntityFieldFilter['values']
+    values: EntityFieldFilter['values'] = null
   ): this {
     key = this.mapField?.[String(key)] ?? key
     const filter: EntityFilterItem = { [key]: { operator, values } }

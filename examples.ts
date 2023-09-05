@@ -17,7 +17,9 @@ import {
   User,
   QueryFilterInstanceSchema,
   Query,
-  CollectionStat
+  CollectionStat,
+  View,
+  ViewsTypeEnum
 } from './src'
 import _ from 'lodash'
 
@@ -200,7 +202,9 @@ async function testWPFilters (): Promise<void> {
 
 /** Форма фильтра */
 async function testQueryForm (): Promise<void> {
+  // 1. Получение проекта и мапинга полей
   const p = await ProjectExt.findOrFail(9)
+
   // const list = await QueryFilterInstanceSchema.getAll();
   const q = new Query()
   q.name = 'default'
@@ -236,7 +240,7 @@ async function testQueryForm (): Promise<void> {
     values: schema?.values?.type,
     allowedValues: schema?.allowedValues?.length
   })
-  // Список доступных значений для boards
+  // Список доступных значений для поля boards
   schema = queryForm.visibleFilterSchemas
     .find((x) => x.id === p.fieldMap.boards)
     ?.resultingSchema('=')
@@ -298,8 +302,88 @@ async function testGetAll (): Promise<void> {
   console.table({ total: allWP.length })
 }
 
+async function testSearchWP (): Promise<void> {
+  const search: string = 'test1'
+  const list = await WPExt.request().addFilter('search', '**', [search])
+    .sortBy('updatedAt', 'desc')
+    .offset(1)
+    .pageSize(10)
+    .getMany()
+
+  console.table(list.map(wp => {
+    return {
+      id: wp.id,
+      subject: wp.subject,
+      externalId: wp.externalId,
+      status: wp.status.self.title
+    }
+  }))
+}
+
+async function testQueries (): Promise<void> {
+  // 1. Получение по ID
+  const queries = await Query.findOrFail(1)
+  // console.table(queries.map(x => {
+  //   return {
+  //     id: x.id,
+  //     name: x.name
+  //   }
+  // }))
+}
+
+async function testViews (): Promise<void> {
+  // 1. Все views-WorkPackagesTable
+  const allViews = await View.workPackagesTable().pageSize(20).getMany()
+  console.table(allViews.map(x => {
+    return {
+      id: x.id,
+      name: x.name,
+      public: x.public,
+      starred: x.starred,
+      query: x.query.id,
+      project: x.project?.id
+    }
+  }))
+
+  // 2. Глобальные views-WorkPackagesTable
+  const globalViews = await View.workPackagesTable().whereProjectNull().getAll()
+  console.table(globalViews.map(x => {
+    return {
+      id: x.id,
+      name: x.name,
+      public: x.public,
+      starred: x.starred,
+      query: x.query.id
+    }
+  }))
+
+  // 3. Локальные (в рамках проекта) views-WorkPackagesTable
+  const programViews = await View.workPackagesTable().whereProject(Config.PROJECT_ID).pageSize(20).getMany()
+  console.table(programViews.map(x => {
+    return {
+      id: x.id,
+      name: x.name,
+      public: x.public,
+      starred: x.starred,
+      query: x.query.id,
+      project: x.project?.id
+    }
+  }))
+
+  // 3. create view
+  const query = new Query()
+  query.name = 'expample-test'
+  await query.save()
+  const newView = new View()
+  newView.type = ViewsTypeEnum.WorkPackagesTable
+  newView.query = query
+  await newView.create()
+  console.table({ id: newView.id, name: newView.name, query: newView.query.id })
+  await query.delete()
+}
+
 async function main (): Promise<void> {
-  await testQueryForm()
+  await testViews()
 }
 
 main().catch(console.error)

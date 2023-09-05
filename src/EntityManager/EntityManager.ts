@@ -127,10 +127,13 @@ export class EntityManager {
     this.emitter.addListener(this.onBeforeRequest.name, listener)
   }
 
-  public makeUrl (path: string | URL): string {
-    return (
-      this.config.baseUrl + (path.toString().startsWith('/') ? '' : '/') + path.toString()
-    )
+  public makeUrl (path: string | URL): URL {
+    // return path.toString().includes(this.config.baseUrl)
+    //   ? new URL(path, this.config.baseUrl)
+    //   : (
+    //       this.config.baseUrl + (path.toString().startsWith('/') ? '' : '/') + path.toString()
+    //     )
+    return new URL(path, this.config.baseUrl)
   }
 
   async fetch (url: string | URL, options?: IFetchInit): Promise<any> {
@@ -233,8 +236,6 @@ export class EntityManager {
         const error = new Error(message)
         throw error
       }
-    } else {
-      throw new Error('Invalid content-type')
     }
     return result
   }
@@ -425,7 +426,7 @@ export class EntityManager {
       }
     }
 
-    const url = new URL(entity.self.href ?? '')
+    const url = new URL(entity.self.href ?? '', this.config.baseUrl)
     if (notify !== undefined) { url.searchParams.append('notify', JSON.stringify(notify)) }
 
     const patchedBody = await this.fetch(url, {
@@ -458,15 +459,26 @@ export class EntityManager {
     entity: T,
     options?: { url?: string, notify?: boolean }
   ): Promise<T> {
-    const url = new URL(options?.url ?? entity.constructor.url)
+    const url = new URL(options?.url ?? entity.constructor.url, this.config.baseUrl)
     if (options?.notify !== undefined) { url.searchParams.append('notify', JSON.stringify(options?.notify)) }
 
+    const { id, ...body } = entity.body
     const createdBody = await this.fetch(url, {
       method: 'POST',
-      body: entity.body
+      body
     })
     entity.body = createdBody
     return entity
+  }
+
+  async delete<T extends BaseEntity>(
+    entity: T
+  ): Promise<void> {
+    const url = new URL(entity.self.href ?? '', this.config.baseUrl)
+
+    await this.fetch(url, {
+      method: 'DELETE'
+    })
   }
 
   public async first<T extends BaseEntity>(

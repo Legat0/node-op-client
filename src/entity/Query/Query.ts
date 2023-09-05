@@ -5,6 +5,10 @@ import type IQueryBody from './IQueryBody'
 import QueryForm from './QueryForm'
 import Project from '../Project/Project'
 import { LinkEntity } from '../Abstract/BaseEntityAny'
+import User from '../User/User'
+import { DisplayRepresentationEnum, HighlightingModeEnum, TimelineZoomLevelEnum, type QueryFilterInstance } from './IQueryBody'
+import Embedded from '../decorators/Embedded'
+import WorkPackageCollection from '../WP/WorkPackageCollection'
 
 // export
 
@@ -14,8 +18,50 @@ export default class Query extends BaseEntity {
   @Field('name', String)
     name: string
 
+  @Field('starred', Boolean)
+  readonly starred: boolean
+
+  @Field('sums', Boolean)
+    sums: boolean
+
+  @Field('createdAt', Date)
+    createdAt: Date
+
+  @Field('updatedAt', Date)
+    updatedAt: Date
+
   @Link('project', Project)
     project?: LinkEntity<Project>
+
+  @Link('user', User)
+    user: LinkEntity<User>
+
+  @Field('user', Array)
+    filters: QueryFilterInstance[]
+
+  @Field('timelineVisible', Boolean)
+    timelineVisible: boolean
+
+  @Field('timelineLabels', Object)
+    timelineLabels: object
+
+  @Field('timelineZoomLevel', String)
+    timelineZoomLevel: TimelineZoomLevelEnum
+
+  @Field('highlightingMode', String)
+    highlightingMode: HighlightingModeEnum
+
+  @Field('showHierarchies', Boolean)
+    showHierarchies: boolean
+
+  @Field('public', Boolean)
+    public: boolean
+
+  @Field('displayRepresentation', String)
+    displayRepresentation: DisplayRepresentationEnum
+
+  @Embedded('results', WorkPackageCollection)
+    results: WorkPackageCollection
 
   body: IQueryBody
 
