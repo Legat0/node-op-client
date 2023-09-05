@@ -2,6 +2,8 @@ import { type IEndpoint } from '../Abstract/IEndpoint'
 import type IAbstractBody from '../Abstract/IAbstractBody'
 import type IUserBody from '../User/IUserBody'
 import type IWorkPackageCollectionBody from '../WP/WorkPackageCollection'
+import { type QueryColumnBody } from './QueryColumn'
+import { type QuerySortByBody } from './QuerySortBy'
 
 export enum TimelineZoomLevelEnum {
   days = 'days',
@@ -35,24 +37,6 @@ export interface QueryFilterInstance {
   }
 }
 
-export interface QueryColumn extends IAbstractBody<string> {
-  _type: 'QueryColumn::Property'
-  name: string
-}
-export interface QuerySortBy extends IAbstractBody<string> {
-  _type: 'QuerySortBy'
-  name: string
-  _links: {
-    self: IEndpoint
-    column: IEndpoint
-    direction: {
-      href: 'urn:openproject-org:api:v3:queries:directions:asc' | 'urn:openproject-org:api:v3:queries:directions:desc'
-      title: string
-    }
-  }
-
-}
-
 /** https://www.openproject.org/docs/api/endpoints/queries/ */
 export default interface IQueryBody extends IAbstractBody {
   _type?: 'Query'
@@ -69,8 +53,8 @@ export default interface IQueryBody extends IAbstractBody {
   displayRepresentation: DisplayRepresentationEnum
   _embedded?: {
     user: IUserBody
-    sortBy: object[]
-    columns: QueryColumn[]
+    sortBy: QuerySortByBody[]
+    columns: QueryColumnBody[]
     results: IWorkPackageCollectionBody
   }
   _links: {

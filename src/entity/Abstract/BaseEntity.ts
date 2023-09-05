@@ -16,9 +16,9 @@ export default abstract class BaseEntity extends BaseEntityAny<number> {
   public $dirty: string[] = []
 
   /** Маппинг доп полей. alias => real name */
-  private $mapField?: MapFieldType
+  protected $mapField?: MapFieldType
 
-  public useMapField (map: MapFieldType): this {
+  public useMapField<T extends this> (this: T, map: MapFieldType): T {
     this.$mapField = map
     return this
   }
@@ -74,6 +74,15 @@ export default abstract class BaseEntity extends BaseEntityAny<number> {
       this,
       options?.fieldPaths,
       options?.notify
+    )
+  }
+
+  public async refresh<Entity extends this>(
+    this: Entity,
+    params?: Record<string, any>
+  ): Promise<Entity> {
+    return await this.getService().refresh(
+      this, params
     )
   }
 

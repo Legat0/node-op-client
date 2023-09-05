@@ -4,7 +4,7 @@ import type BaseEntityAny from '../Abstract/BaseEntityAny'
 export default function LinkArray (
   /** real name or alias */
   name: string,
-  Type: new (...args: any[]) => BaseEntityAny
+  ItemType: new (...args: any[]) => BaseEntityAny
 ) {
   return function (target: BaseEntityAny, propertyKey: string | symbol): void {
     function getter (this: BaseEntityAny): BaseEntityAny[] | Array<LinkEntity<BaseEntityAny>> | undefined | null {
@@ -17,7 +17,7 @@ export default function LinkArray (
         if (cachedLinks !== undefined && Array.isArray(cachedLinks)) return cachedLinks
 
         if (Array.isArray(linkSelf)) {
-          return (this._links[name] = linkSelf.map((x) => new Type(x)))
+          return (this._links[name] = linkSelf.map((x) => new ItemType(x)))
         } else {
           throw new Error('link value is not array')
         }

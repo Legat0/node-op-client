@@ -29,6 +29,7 @@ const Config = {
   PROJECT_ID: 9,
   WP_ID: 2421,
   WP_EXTERNAL_ID: 'МТ-429',
+  QUERY_ID: 70,
   PROJECT_FIELD_EXTERNAL_ID:
     process.env.REACT_APP__OP_PROJECT_FIELD_EXTERNAL_ID ?? 'customField1',
   PROJECT_FIELD_FIELD_MAP:
@@ -320,15 +321,33 @@ async function testSearchWP (): Promise<void> {
   }))
 }
 
-async function testQueries (): Promise<void> {
-  // 1. Получение по ID
-  const queries = await Query.findOrFail(1)
-  // console.table(queries.map(x => {
-  //   return {
-  //     id: x.id,
-  //     name: x.name
-  //   }
-  // }))
+async function testGetQueries (): Promise<void> {
+  // 1. Получение списка с фильтрацией по ID
+  const queries = await Query.request().addFilter('id', '=', [Config.QUERY_ID]).getAll()
+  console.table(queries.map(x => _.pick(x, ['id', 'name'])))
+  // 2. Получение по ID + params
+  const query = await Query.findOrFail(Config.QUERY_ID, { pageSize: 1 })
+  console.log(_.pickBy(query, (v) => !_.isArray(v) && !_.isObject(v)))
+  // 2.1 columns
+  console.table(query.columns.map(x => _.pick(x, ['id', 'name'])))
+  // 2.2 sortBy
+  console.table(query.sortBy.map(x => {
+    return {
+      id: x.id,
+      name: x.name,
+      column: x.column.id,
+      direction: x.direction
+    }
+  }))
+  // 2.3 elements
+  console.log(_.pick(query.results, ['total', 'count', 'pageSize', 'offset']))
+  console.table(query.results.elements(WPExt).map(x => _.pick(x, ['id', 'subject', 'externalId'])))
+  // 2.3.1 get pages elements with use refresh(params)
+  await query.refresh({ offset: 2 })
+  console.table(query.results.elements(WPExt).map(x => _.pick(x, ['id', 'subject', 'externalId'])))
+  // 2.3.2 get pages elements with use getResultPage
+  await query.getResultPage(2)
+  console.table(query.results.elements(WPExt).map(x => _.pick(x, ['id', 'subject', 'externalId'])))
 }
 
 async function testViews (): Promise<void> {
@@ -383,7 +402,7 @@ async function testViews (): Promise<void> {
 }
 
 async function main (): Promise<void> {
-  await testViews()
+  await testGetQueries()
 }
 
 main().catch(console.error)

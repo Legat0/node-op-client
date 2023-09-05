@@ -242,14 +242,30 @@ export class EntityManager {
 
   async get<T extends BaseEntityAny>(
     Type: any,
-    id: number | string | bigint | IEndpoint
+    id: number | string | bigint | IEndpoint,
+    params?: Record<string, any>
   ): Promise<T> {
-    const result = new Type(id)
-    return await this.refresh(result)
+    const entity = new Type(id)
+    return await this.refresh(entity, params)
   }
 
-  async refresh<T extends BaseEntity>(entity: T): Promise<T> {
-    const body = await this.fetch(entity.self.href ?? '')
+  async refresh<T extends BaseEntity>(entity: T, params?: Record<string, any>): Promise<T> {
+    const url = new URL(entity.self.href ?? '', this.config.baseUrl)
+    if (params != null) {
+      Object.entries(params)
+        .map(([key, value]) => {
+          if (value instanceof Map) {
+            return [key, JSON.stringify([...value])]
+          } else if (!['string', 'number'].includes(typeof value)) {
+            return [key, JSON.stringify(value)]
+          }
+
+          return [key, value]
+        }).forEach(([key, value]) => {
+          url.searchParams.append(key, value)
+        })
+    }
+    const body = await this.fetch(url)
     entity.fill(body)
     entity._links = {}
     return entity
@@ -495,9 +511,10 @@ export class EntityManager {
 
   public async findOrFail<T extends BaseEntityAny>(
     Type: any,
-    id: number | string | bigint | IEndpoint
+    id: number | string | bigint | IEndpoint,
+    params?: Record<string, any>
   ): Promise<T> {
-    return await this.get(Type, id)
+    return await this.get(Type, id, params)
   }
 
   public async findBy<T extends BaseEntity>(

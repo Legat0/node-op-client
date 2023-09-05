@@ -48,7 +48,7 @@ abstract class WithService {
     this.$service = EntityManager.instance
   }
 
-  public useService (service?: EntityManager): this {
+  public useService<T extends this> (this: T, service?: EntityManager): T {
     if (service != null) this.$service = service
     return this
   }
@@ -146,7 +146,7 @@ export default abstract class BaseEntityAny<
     this.body._links.self.title = undefined
   }
 
-  fill (source: object): this {
+  public fill<T extends this> (this: T, source: object): T {
     const copy = JSON.parse(JSON.stringify(source)) as IAbstractBody
     Object.assign(this.body, copy)
     return this
@@ -311,9 +311,18 @@ export default abstract class BaseEntityAny<
 
   public static async findOrFail<T extends BaseEntityAny>(
     this: new () => T,
-    id: number | bigint
+    id: number | bigint,
+    params?: Record<string, any>
   ): Promise<T> {
-    return await EntityManager.instance.findOrFail<T>(this, id)
+    return await EntityManager.instance.findOrFail<T>(this, id, params)
+  }
+
+  public async findOrFail<T extends BaseEntityAny>(
+    this: new () => T,
+    id: number | bigint,
+    params?: Record<string, any>
+  ): Promise<T> {
+    return await EntityManager.instance.findOrFail<T>(this, id, params)
   }
 
   public static async getAll<T extends BaseEntityAny>(

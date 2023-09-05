@@ -2,7 +2,7 @@ import type BaseEntityAny from '../Abstract/BaseEntityAny'
 
 export default function EmbeddedArray (
   name: string,
-  Type: new (...args: any[]) => BaseEntityAny
+  ItemType: new (...args: any[]) => BaseEntityAny
 ) {
   return function (target: BaseEntityAny, propertyKey: string | symbol): void {
     function getter (this: BaseEntityAny): BaseEntityAny[] | undefined {
@@ -10,7 +10,7 @@ export default function EmbeddedArray (
       if (name === '') return
       if (this.body._embedded != null && Object.prototype.hasOwnProperty.call(this.body._embedded, name)) {
         if (Array.isArray(this.body._embedded[name])) {
-          return this.body._embedded[name].map((x: any) => new Type(x))
+          return this.body._embedded[name].map((x: any) => new ItemType(x))
         } else {
           throw new Error(`_embedded[${name}] is not array`)
         }
