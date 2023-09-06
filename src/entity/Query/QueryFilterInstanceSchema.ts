@@ -4,6 +4,7 @@ import type IFieldSchema from '../Schema/IFieldSchema'
 import QueryFilter, { type QueryFilterBody } from './QueryFilter'
 import QueryOperator, { type QueryOperatorBody } from './QueryOperator'
 import { type CustomOptionBody } from '../CustomOption/CustomOption'
+import { type FilterOperatorType } from 'contracts/FilterOperatorEnum'
 
 type FilterFieldTypes = '[]CustomOption' | '[]User'
 
@@ -73,7 +74,7 @@ export default class QueryFilterInstanceSchema extends BaseEntityAny<string> {
     return this.body._dependencies[0]
   }
 
-  public dependentOperatorSchema (op: QueryOperator | string): { values: ValuesSchema } {
+  public dependentOperatorSchema (op: QueryOperator | FilterOperatorType): { values: ValuesSchema } {
     const resultOperator = op instanceof QueryOperator ? op : new QueryOperator(op)
     const dependentSchema = this.dependency.dependencies[resultOperator.self.href ?? '']
     if (dependentSchema != null) {
@@ -84,7 +85,7 @@ export default class QueryFilterInstanceSchema extends BaseEntityAny<string> {
   }
 
   public resultingSchema (
-    operator: QueryOperator | string
+    operator: QueryOperator | FilterOperatorType
   ): QueryFilterInstanceSchema {
     const dependentSchema = this.dependentOperatorSchema(operator)
 
