@@ -64,6 +64,12 @@ abstract class WithService {
   }
 }
 
+export function fixedEncodeURIComponent (str: string): string {
+  return encodeURIComponent(str).replace(/[!'()*]/g, function (c) {
+    return '%' + c.charCodeAt(0).toString(16)
+  })
+}
+
 export default abstract class BaseEntityAny<
   IdType extends string | number = string | number
 > extends WithService {
@@ -142,7 +148,7 @@ export default abstract class BaseEntityAny<
     this.body.id = id
     this.body._links.self = this.body._links.self ?? { href: undefined }
     this.body._links.self.href =
-      this.constructor.url + '/' + encodeURIComponent(id)
+      this.constructor.url + '/' + fixedEncodeURIComponent(id.toString())
     this.body._links.self.title = undefined
   }
 

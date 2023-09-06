@@ -247,6 +247,19 @@ async function testQueryForm (): Promise<void> {
     })
   }
 
+  // Схема для поля attachmentContent + оператор "!~"
+  schema = queryForm.visibleFilterSchemas
+    .find((x) => x.id === 'attachmentContent')
+    ?.resultingSchema('!~')
+  if (schema != null) {
+    console.log({
+      id: schema.id,
+      title: schema.allowedFilterValue.self.title,
+      values: schema.values?.type,
+      allowedValues: schema.allowedValues?.length
+    })
+  }
+
   // Список доступных значений для поля boards
   schema = queryForm.visibleFilterSchemas
     .find((x) => x.id === p.fieldMap.boards)
@@ -255,7 +268,7 @@ async function testQueryForm (): Promise<void> {
     return { id: x.id, value: x.value, title: x._links.self.title }
   }))
 
-  // Схема для поля author + оператор "="
+  // Схема для поля backlogsWorkPackageType + оператор "="
   schema = queryForm.visibleFilterSchemas
     .find((x) => x.id === 'backlogsWorkPackageType')
     ?.resultingSchema('=')

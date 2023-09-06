@@ -74,8 +74,13 @@ export default class QueryFilterInstanceSchema extends BaseEntityAny<string> {
   }
 
   public dependentOperatorSchema (op: QueryOperator | string): { values: ValuesSchema } {
-    op = op instanceof QueryOperator ? op : new QueryOperator(op)
-    return this.dependency.dependencies[op.self.href ?? '']
+    const resultOperator = op instanceof QueryOperator ? op : new QueryOperator(op)
+    const dependentSchema = this.dependency.dependencies[resultOperator.self.href ?? '']
+    if (dependentSchema != null) {
+      return dependentSchema
+    } else {
+      throw new Error(`dependency for operator ${resultOperator.id} not found`)
+    }
   }
 
   public resultingSchema (
@@ -85,7 +90,7 @@ export default class QueryFilterInstanceSchema extends BaseEntityAny<string> {
 
     return new QueryFilterInstanceSchema(
       Object.assign({}, this.body, {
-        values: dependentSchema?.values
+        values: dependentSchema.values
       })
     )
   }
