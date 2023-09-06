@@ -14,6 +14,9 @@ import Status from './entity/Status/Status'
 import Type from '././entity/Type/Type'
 import TypeEnum from '././entity/Type/TypeEnum'
 import User from './entity/User/User'
+import PlaceholderUser from './entity/User/PlaceholderUser'
+import Group from './entity/Group/Group'
+import Principal from './entity/Principal/Principal'
 import WP from './entity/WP/WP'
 import Query from './entity/Query/Query'
 import View from './entity/View/View'
@@ -28,6 +31,7 @@ import JsonField from './entity/decorators/JsonField'
 import LinkArray from './entity/decorators/LinkArray'
 import StatusEnum from './entity/Status/StatusEnum'
 
+export { PrincipalTypeEnum } from './entity/Principal/Principal'
 export { type EntityFilterItem } from './contracts/EntityFilterItem'
 export { ViewsTypeEnum } from './entity/View/IViewBody'
 
@@ -61,7 +65,10 @@ export {
   JsonField,
   LinkArray,
   Duration,
-  User
+  Principal,
+  PlaceholderUser,
+  User,
+  Group
 }
 
 export default entityManager

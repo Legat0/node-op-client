@@ -88,6 +88,7 @@ export default class EntityRequestBuilder<T extends BaseEntity> {
     | 'startDate'
     | 'dueDate'
     | 'date'
+    | keyof T['body']
     | '*'
     >,
     // selectProps: Array<keyof T["body"] | `customField${number}` | string>, // TODO доработка бэка OP для фильтрации

@@ -19,7 +19,9 @@ import {
   Query,
   CollectionStat,
   View,
-  ViewsTypeEnum
+  ViewsTypeEnum,
+  Group,
+  Principal
 } from './src'
 import _ from 'lodash'
 
@@ -462,8 +464,24 @@ async function testQueryCRUD (): Promise<void> {
   await query.delete()
 }
 
+async function testGroup (): Promise<void> {
+  // 1. get
+  const groups = await Group.getAll()
+  console.table(groups.map(g => _.pick(g, ['id', 'name'])))
+}
+
+async function testPrincipals (): Promise<void> {
+  // 1. getAll
+  let principals = await Principal.getAll({ pageSize: -1, select: ['*', 'elements/id', 'elements/name', 'elements/_type'] })
+  console.table(principals.map(x => _.pick(x, ['id', 'name', 'type'])))
+  // 2. get with filters by any_name_attribute
+  const search = 'Разработчик'
+  principals = await Principal.request().addFilter('any_name_attribute', '~', search).select(['id', 'name', '_type']).getMany({ pageSize: 20 })
+  console.table(principals.map(x => _.pick(x, ['id', 'name', 'type'])))
+}
+
 async function main (): Promise<void> {
-  await testQueryCRUD()
+  await testPrincipals()
 }
 
 main().catch(console.error)

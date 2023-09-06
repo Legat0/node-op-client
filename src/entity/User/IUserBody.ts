@@ -1,7 +1,8 @@
+import { type PrincipalTypeEnum } from '../Principal/Principal'
 import type IAbstractBody from '../Abstract/IAbstractBody'
 
 export default interface IUserBody extends IAbstractBody {
-  _type?: 'User'
+  _type: PrincipalTypeEnum.User
   name: string
   createdAt: string
   updatedAt: string
