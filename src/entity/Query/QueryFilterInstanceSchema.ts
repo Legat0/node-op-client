@@ -7,7 +7,12 @@ import { type CustomOptionBody } from '../CustomOption/CustomOption'
 
 type FilterFieldTypes = '[]CustomOption' | '[]User'
 
-type ValuesSchema = IFieldSchema<FilterFieldTypes, CustomOptionBody>
+export interface BacklogsTypeBody extends IAbstractBody {
+  _type?: 'BacklogsType'
+  name: string
+}
+
+type ValuesSchema = IFieldSchema<FilterFieldTypes, CustomOptionBody | BacklogsTypeBody>
 
 export interface SchemaDependency {
   _type: 'SchemaDependency'
@@ -48,7 +53,7 @@ export default class QueryFilterInstanceSchema extends BaseEntityAny<string> {
     return this.body.values
   }
 
-  public get allowedValues (): CustomOptionBody[] | null {
+  public get allowedValues (): Array< CustomOptionBody | BacklogsTypeBody > | null {
     return this.values?._embedded?.allowedValues ?? null
   }
 

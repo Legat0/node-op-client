@@ -4,7 +4,7 @@ import BaseEntity from '../Abstract/BaseEntity'
 
 export interface CustomOptionBody extends IAbstractBody {
   _type?: 'CustomOption'
-  value: string
+  value?: string
 }
 /**
  * Custom option

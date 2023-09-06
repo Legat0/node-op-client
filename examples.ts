@@ -225,29 +225,51 @@ async function testQueryForm (): Promise<void> {
   // Схема для поля Заказчик + оператор "="
   let schema = queryForm.visibleFilterSchemas.find((x) => x.id === p.fieldMap.contact_id)
   schema = schema?.resultingSchema('=')
-  console.log({
-    id: schema?.id,
-    title: schema?.self.title,
-    values: schema?.values?.type,
-    allowedValues: schema?.allowedValues?.length
-  })
+  if (schema != null) {
+    console.log({
+      id: schema.id,
+      title: schema.allowedFilterValue.self.title,
+      values: schema.values?.type,
+      allowedValues: schema.allowedValues?.length
+    })
+  }
+
   // Схема для поля author + оператор "="
   schema = queryForm.visibleFilterSchemas
     .find((x) => x.id === 'author')
     ?.resultingSchema('=')
-  console.log({
-    id: schema?.id,
-    title: schema?.self.title,
-    values: schema?.values?.type,
-    allowedValues: schema?.allowedValues?.length
-  })
+  if (schema != null) {
+    console.log({
+      id: schema.id,
+      title: schema.allowedFilterValue.self.title,
+      values: schema.values?.type,
+      allowedValues: schema.allowedValues?.length
+    })
+  }
+
   // Список доступных значений для поля boards
   schema = queryForm.visibleFilterSchemas
     .find((x) => x.id === p.fieldMap.boards)
     ?.resultingSchema('=')
   console.table(schema?.allowedValues?.map(x => {
-    return { id: x.id, value: x.value }
+    return { id: x.id, value: x.value, title: x._links.self.title }
   }))
+
+  // Схема для поля author + оператор "="
+  schema = queryForm.visibleFilterSchemas
+    .find((x) => x.id === 'backlogsWorkPackageType')
+    ?.resultingSchema('=')
+  if (schema != null) {
+    console.log({
+      id: schema.id,
+      title: schema.allowedFilterValue.self.title,
+      values: schema.values?.type,
+      allowedValues: schema.allowedValues?.length
+    })
+    console.table(schema?.allowedValues?.map(x => {
+      return { id: x.id, name: x.name, title: x._links.self.title }
+    }))
+  }
 }
 
 async function testUpdateWP (): Promise<void> {
@@ -408,7 +430,7 @@ async function testViews (): Promise<void> {
 }
 
 async function main (): Promise<void> {
-  await testGetQueries()
+  await testQueryForm()
 }
 
 main().catch(console.error)

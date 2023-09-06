@@ -7,17 +7,27 @@ export enum FieldTypeEnum {
 
 type FieldTypes =
   | 'Integer'
+  | '[1]Integer'
+  | '[1]Float'
   | 'String'
+  | '[1]String'
   | 'DateTime'
+  | '[1]DateTime'
   | 'User'
   | 'Project'
   | 'Boolean'
+  | '[1]Boolean'
   | 'QueryTimelineLabels'
   | 'QueryOrder'
   | 'QueryFilter'
   | 'QueryOperator'
   | 'WorkPackageCollection'
   | '[]User'
+  | '[]WorkPackage'
+  | '[]Priority'
+  | '[]Role'
+  | '[]Type'
+  | '[]Version'
   | '[]Status'
   | '[]Project'
   | '[]QueryFilterInstance'
@@ -25,6 +35,8 @@ type FieldTypes =
   | '[]CustomOption'
   | '[]QueryGroupBy'
   | '[]QueryColumn'
+  | '[1]BacklogsType'
+  | '[1]DateTime'
 
 export default interface IFieldSchema<T extends FieldTypes, AllowedValuesType = any> {
   type: T
