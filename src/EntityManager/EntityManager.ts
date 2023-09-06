@@ -101,7 +101,7 @@ export class EntityManager {
     this.config = {
       baseUrl: 'http://localhost',
       authType: AuthTypeEnum.APIKEY,
-      pageSize: 100,
+      pageSize: 20,
       ...config,
       apiKeyOptions: {
         getApiKey: getApiKeyFromLocalStorage,

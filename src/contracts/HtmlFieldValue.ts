@@ -1,5 +1,5 @@
 export default interface HtmlFieldValue {
-  format?: 'markdown'
+  format?: 'markdown' | 'plain'
   raw: string
   html?: string
 }

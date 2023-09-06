@@ -2,10 +2,10 @@ import Field from '../decorators/Field'
 import BaseEntity from '../Abstract/BaseEntity'
 import type IRoleBody from './IRoleBody'
 
-export class Role extends BaseEntity {
+export default class Role extends BaseEntity {
   public static url = '/api/v3/roles'
 
-  @Field('name', String)
+  @Field()
   public name: string
 
   public body: IRoleBody

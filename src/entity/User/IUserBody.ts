@@ -1,11 +1,10 @@
 import { type PrincipalTypeEnum } from '../Principal/Principal'
 import type IAbstractBody from '../Abstract/IAbstractBody'
+import { type WithCustomFields, type WithTimestamps } from '../Abstract/IAbstractBody'
 
-export default interface IUserBody extends IAbstractBody {
+export default interface IUserBody extends IAbstractBody, WithTimestamps {
   _type: PrincipalTypeEnum.User
   name: string
-  createdAt: string
-  updatedAt: string
   login: string
   admin: boolean
   firstName: string
@@ -14,4 +13,5 @@ export default interface IUserBody extends IAbstractBody {
   avatar: string
   status: string
   identityUrl: any
+  _links: IAbstractBody['_links'] & WithCustomFields
 }

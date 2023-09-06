@@ -11,14 +11,14 @@ export enum VersionStatusEnum {
   closed = 'closed',
 }
 
-export class Version extends BaseEntity {
+export default class Version extends BaseEntity {
   public static url = '/api/v3/versions'
 
   @Field('startDate', Date)
-  public startDate?: Date | null
+  public startDate: Date | null
 
   @Field('endDate', Date)
-  public endDate?: Date | null
+  public endDate: Date | null
 
   @Link('definingProject', Project)
   public definingProject: Project
@@ -30,7 +30,7 @@ export class Version extends BaseEntity {
   public name: string
 
   @Field('status', String)
-  public status?: VersionStatusEnum
+  public status: VersionStatusEnum
 
   public body: IVersionBody
 }

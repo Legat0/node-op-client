@@ -1,5 +1,5 @@
 {
-  "version": "1.9.26",
+  "version": "1.10.27",
   "name": "op-client",
   "_from": "op-client",
   "license": "MIT",
@@ -28,6 +28,7 @@
     "server:down": "docker-compose down",
     "test:integration": "jest  --runInBand --testMatch=\"<rootDir>/test/entity/**/*.test.ts\"",
     "start": "tsc && node dist/examples.js",
+    "lint": "eslint . --ext .ts",
     "_postinstall": "npm ci && npm run build"
   },
   "devDependencies": {

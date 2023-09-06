@@ -10,7 +10,12 @@ export interface ISchemaBody extends Record<string, any> {
 export default interface IAbstractBody<IdType extends number | string = number>
   extends ISchemaBody {
   id: IdType
-  createdAt?: string
-  updatedAt?: string
   _embedded?: Record<string, any>
 }
+
+export interface WithTimestamps {
+  createdAt: string
+  updatedAt: string
+}
+
+export interface WithCustomFields extends Record<`customField${number}`, any> {}

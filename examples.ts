@@ -21,7 +21,10 @@ import {
   View,
   ViewsTypeEnum,
   Group,
-  Principal
+  Principal,
+  Priority,
+  Role,
+  Version
 } from './src'
 import _ from 'lodash'
 
@@ -480,8 +483,26 @@ async function testPrincipals (): Promise<void> {
   console.table(principals.map(x => _.pick(x, ['id', 'name', 'type'])))
 }
 
+async function testPriority (): Promise<void> {
+  // 1. getAll
+  const list = await Priority.getAll()
+  console.table(list.map(x => _.pick(x, ['id', 'name', 'color'])))
+}
+
+async function testRoles (): Promise<void> {
+  // 1. getAll
+  const list = await Role.getAll()
+  console.table(list.map(x => _.pick(x, ['id', 'name'])))
+}
+
+async function testVersions (): Promise<void> {
+  // 1. getAll
+  const list = await Version.getAll()
+  console.table(list.map(x => _.pick(x, ['id', 'name', 'status'])))
+}
+
 async function main (): Promise<void> {
-  await testPrincipals()
+  await testVersions()
 }
 
 main().catch(console.error)

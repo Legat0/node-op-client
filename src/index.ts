@@ -12,11 +12,14 @@ import CustomOption from './entity/CustomOption/CustomOption'
 import Project from './entity/Project/Project'
 import Status from './entity/Status/Status'
 import Type from '././entity/Type/Type'
+import Priority from '././entity/Priority/Priority'
 import TypeEnum from '././entity/Type/TypeEnum'
 import User from './entity/User/User'
 import PlaceholderUser from './entity/User/PlaceholderUser'
 import Group from './entity/Group/Group'
 import Principal from './entity/Principal/Principal'
+import Role from './entity/Role/Role'
+import Version from './entity/Version/Version'
 import WP from './entity/WP/WP'
 import Query from './entity/Query/Query'
 import View from './entity/View/View'
@@ -51,7 +54,9 @@ export {
   Project,
   Status,
   StatusEnum,
+  Priority,
   Type,
+  Version,
   TypeEnum,
   WP,
   View,
@@ -65,6 +70,7 @@ export {
   JsonField,
   LinkArray,
   Duration,
+  Role,
   Principal,
   PlaceholderUser,
   User,

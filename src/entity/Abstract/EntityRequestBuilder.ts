@@ -48,7 +48,7 @@ export default class EntityRequestBuilder<T extends BaseEntity> {
   }
 
   public addFilter (
-    key: keyof T['body'] | string,
+    key: keyof T['body'] | `customField${number}` | string,
     operator: EntityFieldFilter['operator'],
     values: EntityFieldFilter['values'] = null
   ): this {

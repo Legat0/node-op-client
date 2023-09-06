@@ -4,6 +4,7 @@ import type IUserBody from '../User/IUserBody'
 import { type IWorkPackageCollectionBody } from '../WP/WorkPackageCollection'
 import { type QueryColumnBody } from './QueryColumn'
 import { type QuerySortByBody } from './QuerySortBy'
+import { type WithTimestamps } from '../Abstract/IAbstractBody'
 
 export enum TimelineZoomLevelEnum {
   days = 'days',
@@ -38,7 +39,7 @@ export interface QueryFilterInstance {
 }
 
 /** https://www.openproject.org/docs/api/endpoints/queries/ */
-export default interface IQueryBody extends IAbstractBody {
+export default interface IQueryBody extends IAbstractBody, WithTimestamps {
   _type?: 'Query'
   name: string
   starred: boolean
