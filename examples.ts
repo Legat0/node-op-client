@@ -442,8 +442,28 @@ async function testViews (): Promise<void> {
   await query.delete()
 }
 
+async function testQueryCRUD (): Promise<void> {
+  // 1. create
+  let query = new Query()
+  query.name = 'example-query-create-test:' + JSON.stringify(new Date())
+  query.public = false
+  query.project = new Project(Config.PROJECT_ID)
+  await query.save()
+  // await query.create() // Or
+  console.log(query.id)
+  // 2. update
+  query.name = 'example-query-update-test:' + JSON.stringify(new Date())
+  await query.save()
+  // await query.patch() // Or
+  // 3. get
+  query = await Query.findOrFail(query.id)
+  console.log({ id: query.id, name: query.name, project: query.project?.id })
+  // 4. delete
+  await query.delete()
+}
+
 async function main (): Promise<void> {
-  await testQueryForm()
+  await testQueryCRUD()
 }
 
 main().catch(console.error)
