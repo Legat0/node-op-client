@@ -14,7 +14,6 @@ import EmbeddedArray from '../decorators/EmbeddedArray'
 import QueryColumn from './QueryColumn'
 import QuerySortBy from './QuerySortBy'
 import { type EntityFilterItem } from '../../contracts/EntityFilterItem'
-import type WP from '../WP/WP'
 
 // export
 export type QueryParamsType = Partial<{
@@ -147,17 +146,42 @@ export default class Query extends BaseEntity {
     )
   }
 
-  public async getResultPage (
+  public async loadResultPage (
     offset: number
   ): Promise<this> {
     return await this.refresh({ offset })
   }
 
   /** TODO getAllResults see getAll() */
-  public async getAllResults<T extends WP>(
-    Type: new () => T
-  ): Promise<T[]> {
-    // TODO
-    return []
+  public async loadAllResults (
+    options: { threads?: number } = {}
+  ): Promise<this> {
+    if (this.results.count < this.results.total) {
+      const sema = this.getService().createSema(options.threads)
+
+      const pageCount = Math.ceil(this.results.total / this.results.pageSize)
+
+      const pages = await Promise.all(
+        Array.from({ length: pageCount - 1 }, (_, i) => i + 2).map(async (offset) => {
+          const queryCopy = new Query(this.self)
+          await sema?.acquire()
+          try {
+            await queryCopy.refresh({ offset })
+            return queryCopy.results.body._embedded.elements
+          } finally {
+            sema?.release()
+          }
+        }
+        )
+      )
+
+      pages.forEach((page) => {
+        if (this.body._embedded != null) {
+          this.body._embedded.results._embedded.elements = this.body._embedded.results._embedded.elements.concat(page)
+          this.body._embedded.results.count += page.length
+        }
+      })
+    }
+    return this
   }
 }

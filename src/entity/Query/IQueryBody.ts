@@ -1,7 +1,7 @@
 import { type IEndpoint } from '../Abstract/IEndpoint'
 import type IAbstractBody from '../Abstract/IAbstractBody'
 import type IUserBody from '../User/IUserBody'
-import type IWorkPackageCollectionBody from '../WP/WorkPackageCollection'
+import { type IWorkPackageCollectionBody } from '../WP/WorkPackageCollection'
 import { type QueryColumnBody } from './QueryColumn'
 import { type QuerySortByBody } from './QuerySortBy'
 

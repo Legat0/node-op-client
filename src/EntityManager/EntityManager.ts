@@ -43,7 +43,7 @@ export interface EntityManagerConfig {
   }
   /** default pageSize for getAll */
   pageSize?: number
-  /** default count threads for getAll  */
+  /** default count threads for getAll. For Chrome max count = 6  */
   threads?: number
 }
 
@@ -362,6 +362,15 @@ export class EntityManager {
   //   return result;
   // }
 
+  public createSema (threads?: number): Sema {
+    return new Sema(
+      threads ?? this.config.threads ?? 1, // Allow N concurrent async calls
+      {
+        capacity: 100 // Prealloc space for M tokens
+      }
+    )
+  }
+
   async getAll<T extends BaseEntityAny>(
     Type: any,
     options: GetAllOptions = {}
@@ -382,12 +391,7 @@ export class EntityManager {
     elements = elements.concat(firstPageElements)
 
     if (firstPageElements.length < stat.total) {
-      const sema = new Sema(
-        options.threads ?? this.config.threads ?? 1, // Allow N concurrent async calls
-        {
-          capacity: 100 // Prealloc space for M tokens
-        }
-      )
+      const sema = this.createSema(options.threads)
 
       const pageCount = Math.ceil(stat.total / stat.pageSize)
       const pages = await Promise.all(

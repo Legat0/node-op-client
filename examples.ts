@@ -346,8 +346,14 @@ async function testGetQueries (): Promise<void> {
   await query.refresh({ offset: 2 })
   console.table(query.results.elements(WPExt).map(x => _.pick(x, ['id', 'subject', 'externalId'])))
   // 2.3.2 get pages elements with use getResultPage
-  await query.getResultPage(2)
+  await query.loadResultPage(2)
   console.table(query.results.elements(WPExt).map(x => _.pick(x, ['id', 'subject', 'externalId'])))
+  // 3. Получение по ID + custom filters
+  const queryWithFilter = await Query.findOrFail(Config.QUERY_ID, { pageSize: 200, filters: [{ status: { operator: 'o' } }] })
+  console.log(_.pick(queryWithFilter.results, ['total', 'count', 'pageSize', 'offset']))
+  // 4. Загрузка всех задач в несколько потоков loadAllResults
+  await queryWithFilter.loadAllResults({ threads: 6 })
+  console.log({ elementsCount: queryWithFilter.results.body._embedded.elements.length, count: queryWithFilter.results.count })
 }
 
 async function testViews (): Promise<void> {

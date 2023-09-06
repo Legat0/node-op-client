@@ -1,7 +1,7 @@
 import type IAbstractBody from '../Abstract/IAbstractBody'
 import type IWPBody from './IWPBody'
 import type WP from './WP'
-import BaseEntityAny from '../Abstract/BaseEntityAny'
+import BaseEntityAny, { type EntityCollectionElement } from '../Abstract/BaseEntityAny'
 import Field from '../decorators/Field'
 
 export interface IWorkPackageCollectionBody extends IAbstractBody {
@@ -30,7 +30,7 @@ export default class WorkPackageCollection extends BaseEntityAny {
 
   body: IWorkPackageCollectionBody
 
-  elements<T extends WP> (Type: new (...args: any[]) => T): T[] {
+  elements<T extends WP> (Type: new (...args: any[]) => T): Array<EntityCollectionElement<T>> {
     return this.body._embedded.elements.map(x => new Type(x))
   }
 }
