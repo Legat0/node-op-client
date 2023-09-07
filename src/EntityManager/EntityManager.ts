@@ -127,13 +127,29 @@ export class EntityManager {
     this.emitter.addListener(this.onBeforeRequest.name, listener)
   }
 
-  public makeUrl (path: string | URL): URL {
+  public makeUrl (path: string | URL, params?: Record<string, any>): URL {
     // return path.toString().includes(this.config.baseUrl)
     //   ? new URL(path, this.config.baseUrl)
     //   : (
     //       this.config.baseUrl + (path.toString().startsWith('/') ? '' : '/') + path.toString()
     //     )
-    return new URL(path, this.config.baseUrl)
+    const url = new URL(path, this.config.baseUrl)
+
+    if (params != null) {
+      Object.entries(params)
+        .map(([key, value]) => {
+          if (value instanceof Map) {
+            return [key, JSON.stringify([...value])]
+          } else if (!['string', 'number'].includes(typeof value)) {
+            return [key, JSON.stringify(value)]
+          }
+
+          return [key, value]
+        }).forEach(([key, value]) => {
+          url.searchParams.append(key, value)
+        })
+    }
+    return url
   }
 
   async fetch (url: string | URL, options?: IFetchInit): Promise<any> {
@@ -249,21 +265,7 @@ export class EntityManager {
   }
 
   async refresh<T extends BaseEntity>(entity: T, params?: Record<string, any>): Promise<T> {
-    const url = new URL(entity.self.href ?? '', this.config.baseUrl)
-    if (params != null) {
-      Object.entries(params)
-        .map(([key, value]) => {
-          if (value instanceof Map) {
-            return [key, JSON.stringify([...value])]
-          } else if (!['string', 'number'].includes(typeof value)) {
-            return [key, JSON.stringify(value)]
-          }
-
-          return [key, value]
-        }).forEach(([key, value]) => {
-          url.searchParams.append(key, value)
-        })
-    }
+    const url = this.makeUrl(entity.self.href ?? '', params)
     const body = await this.fetch(url)
     entity.fill(body)
     entity._links = {}
@@ -277,22 +279,10 @@ export class EntityManager {
     sema?: Sema
   ): Promise<Array<EntityCollectionElement<T>>> {
     const elements: Array<EntityCollectionElement<T>> = []
-
-    const query = Object.entries(options)
-      .map(([key, value]) => {
-        if (key === 'filters') {
-          value = JSON.stringify(value)
-        } else if (key === 'sortBy' && value !== undefined) {
-          value = JSON.stringify([
-            ...(value as NonNullable<GetAllOptions['sortBy']>)
-          ])
-        }
-        return key + '=' + value
-      })
-      .join('&')
+    const url = this.makeUrl(options.url ?? Type.url, options)
     await sema?.acquire()
     try {
-      const fetchResult = await this.fetch(`${options.url ?? Type.url}?${query}`)
+      const fetchResult = await this.fetch(url)
       elements.push(
         ...fetchResult._embedded.elements.map(
           (eachElement: any) => new Type(eachElement)
