@@ -1,11 +1,11 @@
 import { type IEndpoint } from '../Abstract/IEndpoint'
 import type IAbstractBody from '../Abstract/IAbstractBody'
 import type IFieldSchema from '../Schema/IFieldSchema'
-import type Collection from '../Schema/Collection'
+import type ICollection from '../Schema/ICollection'
 import { type QueryFilterInstanceSchemaBody } from './QueryFilterInstanceSchema'
 
 /** Описание полей модели Query */
-export class QueryFormSchema {
+export interface QueryFormSchema {
   _type: 'Schema'
   // Поля
   id: IFieldSchema<'Integer'>
@@ -35,7 +35,7 @@ export class QueryFormSchema {
 
   _dependencies: any[]
   _embedded: {
-    filtersSchemas: Collection<QueryFilterInstanceSchemaBody>
+    filtersSchemas: ICollection<QueryFilterInstanceSchemaBody>
   }
 
   _links: {

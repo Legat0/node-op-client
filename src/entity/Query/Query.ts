@@ -11,9 +11,11 @@ import { DisplayRepresentationEnum, HighlightingModeEnum, TimelineZoomLevelEnum,
 import Embedded from '../decorators/Embedded'
 import WorkPackageCollection from '../WP/WorkPackageCollection'
 import EmbeddedArray from '../decorators/EmbeddedArray'
-import QueryColumn from './QueryColumn'
+import QueryColumn, { type QueryColumnBody } from './QueryColumn'
 import QuerySortBy from './QuerySortBy'
 import { type EntityFilterItem } from '../../contracts/EntityFilterItem'
+import { type EntityFieldSchema } from '../WP/WPSchema'
+import { type EntityFieldTypes } from '../Schema/IFieldSchema'
 
 // export
 export type QueryParamsType = Partial<{
@@ -96,6 +98,13 @@ export default class Query extends BaseEntity {
 
   @EmbeddedArray('columns', QueryColumn)
     columns: QueryColumn[]
+
+  get columnsWithSchema (): Array<QueryColumnBody & { schema: EntityFieldSchema<EntityFieldTypes> | null } > {
+    return this.body._embedded?.columns.map((column) => {
+      const schema = this.results.getFieldSchema(column.id)
+      return { ...column, schema }
+    }) ?? []
+  }
 
   @EmbeddedArray('sortBy', QuerySortBy)
     sortBy: QuerySortBy[]

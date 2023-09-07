@@ -5,8 +5,7 @@ import QueryFilter, { type QueryFilterBody } from './QueryFilter'
 import QueryOperator, { type QueryOperatorBody } from './QueryOperator'
 import { type CustomOptionBody } from '../CustomOption/CustomOption'
 import { type FilterOperatorType } from 'contracts/FilterOperatorEnum'
-
-type FilterFieldTypes = '[]CustomOption' | '[]User'
+import { type FilterFieldTypes } from '../Schema/IFieldSchema'
 
 export interface BacklogsTypeBody extends IAbstractBody {
   _type?: 'BacklogsType'

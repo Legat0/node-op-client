@@ -373,6 +373,14 @@ async function testGetQueries (): Promise<void> {
   console.log(_.pickBy(query, (v) => !_.isArray(v) && !_.isObject(v)))
   // 2.1 columns
   console.table(query.columns.map(x => _.pick(x, ['id', 'name'])))
+  // 2.1.2 columnsWithSchema
+  console.table(query.columnsWithSchema.map(x => {
+    return {
+      id: x.id,
+      name: x.name,
+      type: x.schema?.type
+    }
+  }))
   // 2.2 sortBy
   console.table(query.sortBy.map(x => {
     return {
@@ -505,7 +513,7 @@ async function testVersions (): Promise<void> {
 }
 
 async function main (): Promise<void> {
-  await testWPFilters()
+  await testGetQueries()
 }
 
 main().catch(console.error)

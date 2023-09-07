@@ -1,4 +1,4 @@
-export default interface Collection<T> {
+export default interface ICollection<T> {
   _type: 'Collection'
   total: number
   count: number
