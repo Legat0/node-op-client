@@ -33,13 +33,14 @@ T,
 
 export type EmbeddedFieldName = `embedded${string}`
 
-export type EntityCollectionElement<T extends BaseEntityAny<string | number>> =
-  {
-    [Filtered in {
-      [K in keyof T]: K extends EmbeddedFieldName ? never : K;
-    }[keyof T]]: T[Filtered];
-    // [K in keyof T as K extends EmbeddedFieldName ? never : K]: T[K];
-  }
+export type EntityCollectionElement<T extends BaseEntityAny<string | number>> = Omit<T, `embedded${string}`>
+// export type EntityCollectionElement<T extends BaseEntityAny<string | number>> =
+// {
+//   [Filtered in {
+//     [K in keyof T]: K extends EmbeddedFieldName ? never : K;
+//   }[keyof T]]: T[Filtered];
+//   // [K in keyof T as K extends EmbeddedFieldName ? never : K]: T[K];
+// }
 
 abstract class WithService {
   protected $service?: EntityManager

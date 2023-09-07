@@ -184,10 +184,12 @@ async function testWPFilters (): Promise<void> {
     })
   )
 
-  /** 4. Задачи проекта + фильтры */
+  /** 4. Задачи проекта + фильтры. */
   wpList = await p
     .workPackages(WPExt)
+    .useMapField(p.fieldMap) // Применение useMapField - для фильтрации и маппинга полей задачи
     .addFilter('status', 'o')
+    .addFilter('Storypoint_id', '>=', 0)
     .sortBy(Config.WP_FIELD_SORT_INDEX, 'desc')
     .pageSize(10)
     .getMany()
@@ -199,6 +201,7 @@ async function testWPFilters (): Promise<void> {
         externalId: x.externalId,
         project: x.project.id,
         doska_number: x.doska_number,
+        Storypoint_id: x.getField('Storypoint_id', Number),
         subject: x.subject,
         status: x.status.self.title
       }
@@ -502,7 +505,7 @@ async function testVersions (): Promise<void> {
 }
 
 async function main (): Promise<void> {
-  await testVersions()
+  await testWPFilters()
 }
 
 main().catch(console.error)

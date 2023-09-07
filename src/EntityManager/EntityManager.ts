@@ -205,24 +205,21 @@ export class EntityManager {
     // выполняем запрос
     const response = await fetch(url, requestInit)
     // let resultAsText = await response.text();
-    if (!response.ok) throw new Error(response.statusText)
+    // if (!response.ok) throw new Error(response.statusText)
 
     let result
     // парсим ответ
-    if (
-      response.headers.get('content-type') ===
-      'application/hal+json; charset=utf-8'
-    ) {
-      try {
-        result = await response.json()
-      } catch (err) {
-        const resonseText = await response.text()
-        throw new Error(resonseText)
-      }
-      if (result._type === 'Error') {
-        let message = `${response.status} [${result.errorIdentifier}] ${result.message}`
-        if (result?._embedded?.errors?.length > 0) {
-          message +=
+
+    try {
+      result = await response.json()
+    } catch (err) {
+      const resonseText = await response.text()
+      throw new Error(resonseText)
+    }
+    if (result._type === 'Error') {
+      let message = `${response.status} [${result.errorIdentifier}] ${result.message}`
+      if (result?._embedded?.errors?.length > 0) {
+        message +=
             ' ' +
             Object.values(result._embedded.errors)
               .map(
@@ -232,11 +229,13 @@ export class EntityManager {
                   eachError.message
               )
               .join(' ')
-        }
-        const error = new Error(message)
-        throw error
       }
+      const error = new Error(message)
+      throw error
+    } else if (!response.ok) {
+      throw new Error(response.statusText)
     }
+
     return result
   }
 

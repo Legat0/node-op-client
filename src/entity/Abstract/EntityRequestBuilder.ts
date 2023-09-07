@@ -142,7 +142,7 @@ export default class EntityRequestBuilder<T extends BaseEntity> {
     const resultFilters = this.requstParams.filters.concat(
       options?.filters ?? []
     )
-    return await this.service.getMany<T>(
+    const elements = await this.service.getMany<T>(
       this.entity,
       {
         ...this.requstParams,
@@ -151,5 +151,11 @@ export default class EntityRequestBuilder<T extends BaseEntity> {
       },
       stat
     )
+    if (this.mapField != null) {
+      for (const item of elements) {
+        item.useMapField(this.mapField)
+      }
+    }
+    return elements
   }
 }
