@@ -93,6 +93,12 @@ export default class Query extends BaseEntity {
   @Field('displayRepresentation', String)
     displayRepresentation: DisplayRepresentationEnum = DisplayRepresentationEnum.list
 
+  @Field()
+    externalId: string // XXX ref to meteor-1c
+
+  @Field()
+    externalCanbanId: string // XXX ref to meteor-1c
+
   @Embedded('results', WorkPackageCollection)
     results: WorkPackageCollection
 

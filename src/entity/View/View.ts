@@ -52,6 +52,9 @@ export default class View extends BaseEntity {
   @Field()
   readonly starred: boolean
 
+  @Field()
+  readonly externalCanbanId: string // XXX ref to meteor-1c
+
   @Link('project', Project)
   readonly project?: LinkEntity<Project>
 

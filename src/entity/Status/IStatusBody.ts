@@ -7,6 +7,7 @@ export default interface IStatusBody extends IAbstractBody {
   isDefault: boolean
   isClosed: boolean
   isReadonly: boolean
+  externalId: string // XXX ref to meteor-1c
   color: string
   defaultDoneRatio: number
 }

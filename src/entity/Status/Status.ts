@@ -11,7 +11,7 @@ export default class Status extends BaseEntity {
     name: string | null
 
   @Field('externalId', String)
-    externalId: string
+    externalId: string // XXX ref to meteor-1c
 
   @Field('isClosed', Boolean)
     isClosed: boolean

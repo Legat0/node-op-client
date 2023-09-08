@@ -13,6 +13,7 @@ export default interface IViewBody extends IAbstractBody {
   name: string
   public: boolean
   starred: boolean
+  externalCanbanId: string // XXX ref to meteor-1c
   _links: {
     self: IEndpoint
     project: IEndpoint

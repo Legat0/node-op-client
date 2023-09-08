@@ -52,6 +52,8 @@ export default interface IQueryBody extends IAbstractBody, WithTimestamps {
   showHierarchies: boolean
   public: boolean
   displayRepresentation: DisplayRepresentationEnum
+  externalId: string // XXX ref to meteor-1c
+  externalCanbanId: string // XXX ref to meteor-1c
   _embedded?: {
     user: IUserBody
     sortBy: QuerySortByBody[]
