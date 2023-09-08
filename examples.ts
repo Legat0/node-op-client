@@ -24,9 +24,11 @@ import {
   Principal,
   Priority,
   Role,
-  Version
+  Version,
+  FilterOperatorEnum
 } from './src'
 import _ from 'lodash'
+import { VersionSharingEnum } from './src/entity/Version/Version'
 
 dotenv.config()
 
@@ -348,7 +350,12 @@ async function testGetAll (): Promise<void> {
 
 async function testSearchWP (): Promise<void> {
   const search: string = 'test1'
-  const list = await WPExt.request().addFilter('search', '**', [search])
+  const list = await WPExt.request()
+    .search(search)
+    // OR addFilter + use enum operator
+    // .addFilter('search', FilterOperatorEnum.search, search)
+    // OR addFilter + string operator
+    // .addFilter('search', '**', search)
     .sortBy('updatedAt', 'desc')
     .offset(1)
     .pageSize(10)
@@ -470,11 +477,19 @@ async function testQueryCRUD (): Promise<void> {
   // 2. update
   query.name = 'example-query-update-test:' + JSON.stringify(new Date())
   await query.save()
-  // await query.patch() // Or
+  // Or
+  // await query.patch()
+  // Or
+  // await query.update()
   // 3. get
   query = await Query.findOrFail(query.id)
   console.log({ id: query.id, name: query.name, project: query.project?.id })
-  // 4. delete
+  // 4. star /unstar
+  await query.star()
+  console.log({ id: query.id, name: query.name, project: query.project?.id, starred: query.starred })
+  await query.unstar()
+  console.log({ id: query.id, name: query.name, project: query.project?.id, starred: query.starred })
+  // 5. delete
   await query.delete()
 }
 
@@ -508,12 +523,15 @@ async function testRoles (): Promise<void> {
 
 async function testVersions (): Promise<void> {
   // 1. getAll
-  const list = await Version.getAll()
+  let list = await Version.getAll()
   console.table(list.map(x => _.pick(x, ['id', 'name', 'status'])))
+  // 2. filters. Only by sharing field
+  list = await Version.request({ filters: [{ sharing: { operator: FilterOperatorEnum.in, values: [VersionSharingEnum.none] } }] }).pageSize(5).getMany()
+  console.table(list.map(x => _.pick(x, ['id', 'name', 'status', 'sharing'])))
 }
 
 async function main (): Promise<void> {
-  await testGetQueries()
+  await testQueryCRUD()
 }
 
 main().catch(console.error)

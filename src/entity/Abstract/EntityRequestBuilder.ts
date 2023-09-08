@@ -11,6 +11,7 @@ import {
 import { type MapFieldType } from './BaseEntity'
 import type BaseEntity from './BaseEntity'
 import { type EntityCollectionElement } from './BaseEntityAny'
+import { FilterOperatorEnum } from '../../contracts/FilterOperatorEnum'
 
 export default class EntityRequestBuilder<T extends BaseEntity> {
   private service: EntityManager
@@ -56,6 +57,10 @@ export default class EntityRequestBuilder<T extends BaseEntity> {
     const filter: EntityFilterItem = { [key]: { operator, values } }
     this.requstParams.filters.push(filter)
     return this
+  }
+
+  public search (str: string): this {
+    return this.addFilter('search', FilterOperatorEnum.search, str)
   }
 
   public offset (offset: number): this {

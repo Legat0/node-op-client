@@ -193,4 +193,18 @@ export default class Query extends BaseEntity {
     }
     return this
   }
+
+  public async star (): Promise<void> {
+    await this.getService().fetch(this.makeUrl('star'), {
+      method: 'PATCH'
+    })
+    this.body.starred = true
+  }
+
+  public async unstar (): Promise<void> {
+    await this.getService().fetch(this.makeUrl('unstar'), {
+      method: 'PATCH'
+    })
+    this.body.starred = false
+  }
 }

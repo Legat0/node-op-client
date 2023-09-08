@@ -1,5 +1,5 @@
 import { type IEndpoint } from '../Abstract/IEndpoint'
-import { type VersionStatusEnum } from './Version'
+import { type VersionSharingEnum, type VersionStatusEnum } from './Version'
 import type IProjectBody from '../Project/IProjectBody'
 import type HtmlFieldValue from '../../contracts/HtmlFieldValue'
 import type IAbstractBody from 'entity/Abstract/IAbstractBody'
@@ -13,7 +13,7 @@ export default interface IVersionBody extends IAbstractBody, WithTimestamps, Wit
   startDate: string
   endDate: string
   status: VersionStatusEnum
-  sharing: string | 'none'
+  sharing: VersionSharingEnum
 
   _embedded?: {
     project?: IProjectBody

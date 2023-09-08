@@ -36,6 +36,7 @@ import StatusEnum from './entity/Status/StatusEnum'
 
 export { PrincipalTypeEnum } from './entity/Principal/Principal'
 export { type EntityFilterItem } from './contracts/EntityFilterItem'
+export { FilterOperatorEnum } from './contracts/FilterOperatorEnum'
 export { ViewsTypeEnum } from './entity/View/IViewBody'
 
 export { type EntityManagerConfig, type ICollectionStat, CollectionStat } from './EntityManager/EntityManager'

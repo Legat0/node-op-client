@@ -11,6 +11,13 @@ export enum VersionStatusEnum {
   closed = 'closed',
 }
 
+export enum VersionSharingEnum {
+  none = 'none',
+  descendants = 'descendants',
+  hierarchy = 'hierarchy',
+  tree = 'tree',
+  system = 'system',
+}
 export default class Version extends BaseEntity {
   public static url = '/api/v3/versions'
 
@@ -31,6 +38,9 @@ export default class Version extends BaseEntity {
 
   @Field('status', String)
   public status: VersionStatusEnum
+
+  @Field('status', String)
+  public sharing: VersionSharingEnum
 
   public body: IVersionBody
 }

@@ -77,6 +77,9 @@ export default abstract class BaseEntity extends BaseEntityAny<number> {
     )
   }
 
+  /** alias for patch */
+  public update: <Entity extends this>(this: Entity, ...args: Parameters<typeof BaseEntity.prototype.patch>) => ReturnType<typeof BaseEntity.prototype.patch>
+
   public async refresh<Entity extends this>(
     this: Entity,
     params?: Record<string, any>
@@ -106,3 +109,5 @@ export default abstract class BaseEntity extends BaseEntityAny<number> {
     await this.getService().delete(this)
   }
 }
+/** alias for patch */
+BaseEntity.prototype.update = BaseEntity.prototype.patch

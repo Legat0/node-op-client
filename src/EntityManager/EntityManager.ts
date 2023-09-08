@@ -223,15 +223,20 @@ export class EntityManager {
     // let resultAsText = await response.text();
     // if (!response.ok) throw new Error(response.statusText)
 
-    let result
+    let result = null
     // парсим ответ
+
+    if (response.status === 204) return null
 
     try {
       result = await response.json()
     } catch (err) {
-      const resonseText = await response.text()
-      throw new Error(resonseText)
+      try {
+        const resonseText = await response.text()
+        throw new Error(resonseText)
+      } catch {}
     }
+
     if (result._type === 'Error') {
       let message = `${response.status} [${result.errorIdentifier}] ${result.message}`
       if (result?._embedded?.errors?.length > 0) {
