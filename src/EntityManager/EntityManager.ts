@@ -128,15 +128,11 @@ export class EntityManager {
   }
 
   public makeUrl (path: string | URL, params?: Record<string, any>): URL {
-    // return path.toString().includes(this.config.baseUrl)
-    //   ? new URL(path, this.config.baseUrl)
-    //   : (
-    //       this.config.baseUrl + (path.toString().startsWith('/') ? '' : '/') + path.toString()
-    //     )
+    const REMOVE_PARAMS = ['url']
     const url = new URL(path, this.config.baseUrl)
 
     if (params != null) {
-      Object.entries(params)
+      Object.entries(params).filter(([key, value]) => !REMOVE_PARAMS.includes(key))
         .map(([key, value]) => {
           if (value instanceof Map) {
             return [key, JSON.stringify([...value])]
