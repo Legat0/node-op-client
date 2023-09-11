@@ -25,7 +25,9 @@ import {
   Priority,
   Role,
   Version,
-  FilterOperatorEnum
+  FilterOperatorEnum,
+  QueryFilter,
+  QueryOperator
 } from './src'
 import _ from 'lodash'
 import { VersionSharingEnum } from './src/entity/Version/Version'
@@ -233,7 +235,9 @@ async function testQueryForm (): Promise<void> {
     })
   )
   // Схема для поля Заказчик + оператор "="
-  let schema = queryForm.visibleFilterSchemas.find((x) => x.id === p.fieldMap.contact_id)
+  let schema = queryForm.visibleFilterSchemas.find(
+    (x) => x.id === p.fieldMap.contact_id
+  )
   schema = schema?.resultingSchema('=')
   if (schema != null) {
     console.log({
@@ -274,9 +278,11 @@ async function testQueryForm (): Promise<void> {
   schema = queryForm.visibleFilterSchemas
     .find((x) => x.id === p.fieldMap.boards)
     ?.resultingSchema('=')
-  console.table(schema?.allowedValues?.map(x => {
-    return { id: x.id, value: x.value, title: x._links.self.title }
-  }))
+  console.table(
+    schema?.allowedValues?.map((x) => {
+      return { id: x.id, value: x.value, title: x._links.self.title }
+    })
+  )
 
   // Схема для поля backlogsWorkPackageType + оператор "="
   schema = queryForm.visibleFilterSchemas
@@ -289,9 +295,11 @@ async function testQueryForm (): Promise<void> {
       values: schema.values?.type,
       allowedValues: schema.allowedValues?.length
     })
-    console.table(schema?.allowedValues?.map(x => {
-      return { id: x.id, name: x.name, title: x._links.self.title }
-    }))
+    console.table(
+      schema?.allowedValues?.map((x) => {
+        return { id: x.id, name: x.name, title: x._links.self.title }
+      })
+    )
   }
 }
 
@@ -329,7 +337,10 @@ async function testGetAll (): Promise<void> {
     })
   )
   console.table(stat)
-  const list2 = await WPExt.request().addFilter('project', '=', Config.PROJECT_ID).addFilter('status', 'o').getMany({ pageSize: 20, offset: 1 }, stat)
+  const list2 = await WPExt.request()
+    .addFilter('project', '=', Config.PROJECT_ID)
+    .addFilter('status', 'o')
+    .getMany({ pageSize: 20, offset: 1 }, stat)
 
   console.table(
     list2.map((x) => {
@@ -361,20 +372,24 @@ async function testSearchWP (): Promise<void> {
     .pageSize(10)
     .getMany()
 
-  console.table(list.map(wp => {
-    return {
-      id: wp.id,
-      subject: wp.subject,
-      externalId: wp.externalId,
-      status: wp.status.self.title
-    }
-  }))
+  console.table(
+    list.map((wp) => {
+      return {
+        id: wp.id,
+        subject: wp.subject,
+        externalId: wp.externalId,
+        status: wp.status.self.title
+      }
+    })
+  )
 }
 
 async function testGetQueries (): Promise<void> {
   // 1. Получение списка с фильтрацией по ID
-  const queries = await Query.request().addFilter('id', '=', [Config.QUERY_ID]).getAll()
-  console.table(queries.map(x => _.pick(x, ['id', 'name'])))
+  const queries = await Query.request()
+    .addFilter('id', '=', [Config.QUERY_ID])
+    .getAll()
+  console.table(queries.map((x) => _.pick(x, ['id', 'name'])))
   // 2. Получение по ID + params
   const query = await Query.findOrFail(Config.QUERY_ID, { pageSize: 1 })
   console.log(_.pickBy(query, (v) => !_.isArray(v) && !_.isObject(v)))
@@ -382,79 +397,114 @@ async function testGetQueries (): Promise<void> {
   console.log('filters', JSON.stringify(query.filters))
   console.log('queryFilters', JSON.stringify(query.queryFilters))
   // 2.2 columns
-  console.table(query.columns.map(x => _.pick(x, ['id', 'name'])))
+  console.table(query.columns.map((x) => _.pick(x, ['id', 'name'])))
   // 2.2.2 columnsWithSchema
-  console.table(query.columnsWithSchema.map(x => {
-    return {
-      id: x.id,
-      name: x.name,
-      type: x.schema?.type
-    }
-  }))
+  console.table(
+    query.columnsWithSchema.map((x) => {
+      return {
+        id: x.id,
+        name: x.name,
+        type: x.schema?.type
+      }
+    })
+  )
   // 2.3 sortBy
-  console.table(query.sortBy.map(x => {
-    return {
-      id: x.id,
-      name: x.name,
-      column: x.column.id,
-      direction: x.direction
-    }
-  }))
+  console.table(
+    query.sortBy.map((x) => {
+      return {
+        id: x.id,
+        name: x.name,
+        column: x.column.id,
+        direction: x.direction
+      }
+    })
+  )
   // 2.4 elements
   console.log(_.pick(query.results, ['total', 'count', 'pageSize', 'offset']))
-  console.table(query.results.elements(WPExt).map(x => _.pick(x, ['id', 'subject', 'externalId'])))
+  console.table(
+    query.results
+      .elements(WPExt)
+      .map((x) => _.pick(x, ['id', 'subject', 'externalId']))
+  )
   // 2.4.1 get pages elements with use refresh(params)
   await query.refresh({ offset: 2 })
-  console.table(query.results.elements(WPExt).map(x => _.pick(x, ['id', 'subject', 'externalId'])))
+  console.table(
+    query.results
+      .elements(WPExt)
+      .map((x) => _.pick(x, ['id', 'subject', 'externalId']))
+  )
   // 2.4.2 get pages elements with use getResultPage
   await query.loadResultPage(2)
-  console.table(query.results.elements(WPExt).map(x => _.pick(x, ['id', 'subject', 'externalId'])))
+  console.table(
+    query.results
+      .elements(WPExt)
+      .map((x) => _.pick(x, ['id', 'subject', 'externalId']))
+  )
   // 3. Получение по ID + custom filters
-  const queryWithFilter = await Query.findOrFail(Config.QUERY_ID, { pageSize: 200, filters: [{ status: { operator: 'o' } }] })
-  console.log(_.pick(queryWithFilter.results, ['total', 'count', 'pageSize', 'offset']))
+  const queryWithFilter = await Query.findOrFail(Config.QUERY_ID, {
+    pageSize: 200,
+    filters: [{ status: { operator: 'o' } }]
+  })
+  console.log(
+    _.pick(queryWithFilter.results, ['total', 'count', 'pageSize', 'offset'])
+  )
   // 4. Загрузка всех задач в несколько потоков loadAllResults
   await queryWithFilter.loadAllResults({ threads: 6 })
-  console.log({ elementsCount: queryWithFilter.results.body._embedded.elements.length, count: queryWithFilter.results.count })
+  console.log({
+    elementsCount: queryWithFilter.results.body._embedded.elements.length,
+    count: queryWithFilter.results.count
+  })
 }
 
 async function testViews (): Promise<void> {
   // 1. Все views-WorkPackagesTable
   const allViews = await View.workPackagesTable().pageSize(20).getMany()
-  console.table(allViews.map(x => {
-    return {
-      id: x.id,
-      name: x.name,
-      public: x.public,
-      starred: x.starred,
-      query: x.query.id,
-      project: x.project?.id
-    }
-  }))
+  console.table(
+    allViews.map((x) => {
+      return {
+        id: x.id,
+        name: x.name,
+        public: x.public,
+        starred: x.starred,
+        query: x.query.id,
+        project: x.project?.id
+      }
+    })
+  )
 
   // 2. Глобальные views-WorkPackagesTable
-  const globalViews = await View.workPackagesTable().whereProjectNull().getAll()
-  console.table(globalViews.map(x => {
-    return {
-      id: x.id,
-      name: x.name,
-      public: x.public,
-      starred: x.starred,
-      query: x.query.id
-    }
-  }))
+  const globalViews = await View.workPackagesTable()
+    .whereProjectNull()
+    .getAll()
+  console.table(
+    globalViews.map((x) => {
+      return {
+        id: x.id,
+        name: x.name,
+        public: x.public,
+        starred: x.starred,
+        query: x.query.id
+      }
+    })
+  )
 
   // 3. Локальные (в рамках проекта) views-WorkPackagesTable
-  const programViews = await View.workPackagesTable().whereProject(Config.PROJECT_ID).pageSize(20).getMany()
-  console.table(programViews.map(x => {
-    return {
-      id: x.id,
-      name: x.name,
-      public: x.public,
-      starred: x.starred,
-      query: x.query.id,
-      project: x.project?.id
-    }
-  }))
+  const programViews = await View.workPackagesTable()
+    .whereProject(Config.PROJECT_ID)
+    .pageSize(20)
+    .getMany()
+  console.table(
+    programViews.map((x) => {
+      return {
+        id: x.id,
+        name: x.name,
+        public: x.public,
+        starred: x.starred,
+        query: x.query.id,
+        project: x.project?.id
+      }
+    })
+  )
 
   // 3. create view
   const query = new Query()
@@ -464,7 +514,11 @@ async function testViews (): Promise<void> {
   newView.type = ViewsTypeEnum.WorkPackagesTable
   newView.query = query
   await newView.create()
-  console.table({ id: newView.id, name: newView.name, query: newView.query.id })
+  console.table({
+    id: newView.id,
+    name: newView.name,
+    query: newView.query.id
+  })
   await query.delete()
 }
 
@@ -474,6 +528,92 @@ async function testQueryCRUD (): Promise<void> {
   query.name = 'example-query-create-test:' + JSON.stringify(new Date())
   query.public = false
   query.project = new Project(Config.PROJECT_ID)
+  // 1.2 Set filters
+  // 1.2.1 HAL-format
+  query.filters = [
+    {
+      _links: {
+        filter: QueryFilter.make('status').self,
+        operator: QueryOperator.make(FilterOperatorEnum.wp_open).self
+      }
+    },
+    {
+      _links: {
+        filter: QueryFilter.make('customField27').self,
+        operator: QueryOperator.make(FilterOperatorEnum.in).self,
+        values: [CustomOption.make('2994').self]
+      }
+    },
+    {
+      _links: {
+        filter: QueryFilter.make('assignee').self,
+        operator: QueryOperator.make(FilterOperatorEnum.in).self,
+        values: [User.make('me').self]
+      }
+    },
+    {
+      _links: {
+        filter: QueryFilter.make('customField139').self,
+        operator: QueryOperator.make(FilterOperatorEnum.gte).self
+      },
+      values: ['123']
+    }
+  ]
+  // 1.2.2 OR use Models type
+  query.filters = [
+    {
+      _links: {
+        filter: QueryFilter.make('status'),
+        operator: QueryOperator.make(FilterOperatorEnum.wp_open)
+      }
+    },
+    {
+      _links: {
+        filter: new QueryFilter('customField27'),
+        operator: new QueryOperator(FilterOperatorEnum.in),
+        values: [new CustomOption('2994')]
+      }
+    },
+    {
+      _links: {
+        filter: new QueryFilter('assignee'),
+        operator: new QueryOperator(FilterOperatorEnum.in),
+        values: [new User('me')]
+      }
+    },
+    {
+      _links: {
+        filter: QueryFilter.make('customField139'),
+        operator: QueryOperator.make(FilterOperatorEnum.gte)
+      },
+      values: ['123']
+    }
+  ]
+  // 1.2.3 OR use string-id filter and string/enum-id operator
+  query.filters = [
+    { _links: { filter: 'status', operator: FilterOperatorEnum.wp_open } },
+    {
+      _links: {
+        filter: 'customField27',
+        operator: FilterOperatorEnum.in,
+        values: [new CustomOption('2994')]
+      }
+    },
+    {
+      _links: {
+        filter: 'assignee',
+        operator: FilterOperatorEnum.in,
+        values: [new User('me')]
+      }
+    },
+    {
+      _links: {
+        filter: 'customField139',
+        operator: FilterOperatorEnum.gte
+      },
+      values: ['123']
+    }
+  ]
   await query.save()
   // await query.create() // Or
   console.log(query.id)
@@ -489,9 +629,19 @@ async function testQueryCRUD (): Promise<void> {
   console.log({ id: query.id, name: query.name, project: query.project?.id })
   // 4. star /unstar
   await query.star()
-  console.log({ id: query.id, name: query.name, project: query.project?.id, starred: query.starred })
+  console.log({
+    id: query.id,
+    name: query.name,
+    project: query.project?.id,
+    starred: query.starred
+  })
   await query.unstar()
-  console.log({ id: query.id, name: query.name, project: query.project?.id, starred: query.starred })
+  console.log({
+    id: query.id,
+    name: query.name,
+    project: query.project?.id,
+    starred: query.starred
+  })
   // 5. delete
   await query.delete()
 }
@@ -499,42 +649,61 @@ async function testQueryCRUD (): Promise<void> {
 async function testGroup (): Promise<void> {
   // 1. get
   const groups = await Group.getAll()
-  console.table(groups.map(g => _.pick(g, ['id', 'name'])))
+  console.table(groups.map((g) => _.pick(g, ['id', 'name'])))
 }
 
 async function testPrincipals (): Promise<void> {
   // 1. getAll
-  let principals = await Principal.getAll({ pageSize: -1, select: ['*', 'elements/id', 'elements/name', 'elements/_type'] })
-  console.table(principals.map(x => _.pick(x, ['id', 'name', 'type'])))
+  let principals = await Principal.getAll({
+    pageSize: -1,
+    select: ['*', 'elements/id', 'elements/name', 'elements/_type']
+  })
+  console.table(principals.map((x) => _.pick(x, ['id', 'name', 'type'])))
   // 2. get with filters by any_name_attribute
   const search = 'Разработчик'
-  principals = await Principal.request().addFilter('any_name_attribute', '~', search).select(['id', 'name', '_type']).getMany({ pageSize: 20 })
-  console.table(principals.map(x => _.pick(x, ['id', 'name', 'type'])))
+  principals = await Principal.request()
+    .addFilter('any_name_attribute', '~', search)
+    .select(['id', 'name', '_type'])
+    .getMany({ pageSize: 20 })
+  console.table(principals.map((x) => _.pick(x, ['id', 'name', 'type'])))
 }
 
 async function testPriority (): Promise<void> {
   // 1. getAll
   const list = await Priority.getAll()
-  console.table(list.map(x => _.pick(x, ['id', 'name', 'color'])))
+  console.table(list.map((x) => _.pick(x, ['id', 'name', 'color'])))
 }
 
 async function testRoles (): Promise<void> {
   // 1. getAll
   const list = await Role.getAll()
-  console.table(list.map(x => _.pick(x, ['id', 'name'])))
+  console.table(list.map((x) => _.pick(x, ['id', 'name'])))
 }
 
 async function testVersions (): Promise<void> {
   // 1. getAll
   let list = await Version.getAll()
-  console.table(list.map(x => _.pick(x, ['id', 'name', 'status'])))
+  console.table(list.map((x) => _.pick(x, ['id', 'name', 'status'])))
   // 2. filters. Only by sharing field
-  list = await Version.request({ filters: [{ sharing: { operator: FilterOperatorEnum.in, values: [VersionSharingEnum.none] } }] }).pageSize(5).getMany()
-  console.table(list.map(x => _.pick(x, ['id', 'name', 'status', 'sharing'])))
+  list = await Version.request({
+    filters: [
+      {
+        sharing: {
+          operator: FilterOperatorEnum.in,
+          values: [VersionSharingEnum.none]
+        }
+      }
+    ]
+  })
+    .pageSize(5)
+    .getMany()
+  console.table(
+    list.map((x) => _.pick(x, ['id', 'name', 'status', 'sharing']))
+  )
 }
 
 async function main (): Promise<void> {
-  await testGetQueries()
+  await testQueryCRUD()
 }
 
 main().catch(console.error)

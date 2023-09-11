@@ -3,10 +3,12 @@
 export enum FilterOperatorEnum {
   /** are equal to one of the given value(s) */
   in = '=',
+  equal = '=',
   /** are containing all of the given value(s) */
   contains_all = '&=',
   /**  are not equal one of the given value(s) */
   not_in = '!',
+  not_equal = '!',
   /**   are greater or equal than the given value | One numerical value */
   gte = '>=',
   /**   are lesser or equal than the given value | One numerical value */

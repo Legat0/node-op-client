@@ -18,6 +18,7 @@ import { type EntityFieldTypes } from '../Schema/IFieldSchema'
 import QueryFilter from './QueryFilter'
 import QueryOperator from './QueryOperator'
 import { type FilterOperatorType } from 'contracts/FilterOperatorEnum'
+import { type IEndpoint } from 'entity/Abstract/IEndpoint'
 
 export type QueryParamsType = Partial<{
   pageSize: number
@@ -38,6 +39,15 @@ export class QueryParamsBuilder {
   pageSize: number
   offset: number
   columns: string[]
+}
+
+interface InputQueryFilterInstance {
+  values?: string[]
+  _links: {
+    filter: QueryFilter | IEndpoint | string
+    operator: QueryOperator | IEndpoint | FilterOperatorType
+    values?: Array<BaseEntityAny | IEndpoint>
+  }
 }
 
 export default class Query extends BaseEntity {
@@ -64,9 +74,28 @@ export default class Query extends BaseEntity {
   @Link('user', User)
     user: LinkEntity<User>
 
-  @Field('filters', Array)
-    filters: QueryFilterInstance[]
+  /** HAL-format */
+  get filters (): QueryFilterInstance[] {
+    return this.getField<QueryFilterInstance[]>('filters', Array) ?? []
+  }
 
+  /** HAL-format */
+  set filters (filters: InputQueryFilterInstance[]) {
+    this.body.filters = filters.map(filter => {
+      return {
+        values: filter.values,
+        _links: {
+          filter: filter._links.filter instanceof QueryFilter ? filter._links.filter.self : QueryFilter.make(filter._links.filter).self,
+          operator: filter._links.operator instanceof QueryOperator ? filter._links.operator.self : QueryOperator.make(filter._links.operator).self,
+          values: filter._links.values?.map(v => {
+            return v instanceof BaseEntityAny ? v.self : v
+          })
+        }
+      }
+    })
+  }
+
+  /** query-format */
   public get queryFilters (): EntityFilterItem[] {
     const result: EntityFilterItem[] = []
     for (const filterItem of this.filters) {
@@ -75,7 +104,7 @@ export default class Query extends BaseEntity {
       result.push({
         [filter.id]: {
           operator: operator.id as FilterOperatorType,
-          values: filterItem.values ?? filterItem._links.values.map(x => BaseEntityAny.idFromLink(x.href))
+          values: filterItem.values ?? filterItem._links.values?.map(x => BaseEntityAny.idFromLink(x.href))
         }
       })
     }

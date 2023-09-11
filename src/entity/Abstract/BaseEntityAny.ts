@@ -124,6 +124,10 @@ export default abstract class BaseEntityAny<
     }
   }
 
+  public static make<T extends BaseEntityAny>(this: new (...args: any[]) => T, init?: number | bigint | string | IEndpoint | IPartialAbstractBody): T {
+    return new this(init)
+  }
+
   /** For json CustomOptions */
   public parseSelf<T extends object>(): T | undefined {
     try {

@@ -27,14 +27,14 @@ export enum DisplayRepresentationEnum {
   list = 'list',
 }
 export interface QueryFilterInstance {
-  _type: `${string}QueryFilter`
-  name: string
+  _type?: `${string}QueryFilter`
+  name?: string
   values?: string[]
   _links: {
-    schema: IEndpoint
+    schema?: IEndpoint
     filter: IEndpoint
     operator: IEndpoint
-    values: IEndpoint[]
+    values?: IEndpoint[]
   }
 }
 

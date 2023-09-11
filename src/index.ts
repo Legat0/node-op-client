@@ -22,6 +22,8 @@ import Role from './entity/Role/Role'
 import Version from './entity/Version/Version'
 import WP from './entity/WP/WP'
 import Query from './entity/Query/Query'
+import QueryFilter from './entity/Query/QueryFilter'
+import QueryOperator from './entity/Query/QueryOperator'
 import View from './entity/View/View'
 import QueryForm from './entity/Query/QueryForm'
 import QueryFilterInstanceSchema from './entity/Query/QueryFilterInstanceSchema'
@@ -62,6 +64,8 @@ export {
   WP,
   View,
   Query,
+  QueryFilter,
+  QueryOperator,
   QueryForm,
   QueryFilterInstanceSchema,
   Link,
