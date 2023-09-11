@@ -159,7 +159,7 @@ export default abstract class BaseEntityAny<
     return this
   }
 
-  static idFromLink (href: string | null): string {
+  public static idFromLink (href: string | null): string {
     const idPart = (href ?? '').split('/').pop()?.split('?')[0]
     return decodeURIComponent(idPart ?? '')
   }

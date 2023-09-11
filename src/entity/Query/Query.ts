@@ -4,8 +4,7 @@ import BaseEntity from '../Abstract/BaseEntity'
 import type IQueryBody from './IQueryBody'
 import QueryForm from './QueryForm'
 import Project from '../Project/Project'
-import type BaseEntityAny from '../Abstract/BaseEntityAny'
-import { LinkEntity } from '../Abstract/BaseEntityAny'
+import BaseEntityAny, { LinkEntity } from '../Abstract/BaseEntityAny'
 import User from '../User/User'
 import { DisplayRepresentationEnum, HighlightingModeEnum, TimelineZoomLevelEnum, type QueryFilterInstance } from './IQueryBody'
 import Embedded from '../decorators/Embedded'
@@ -16,8 +15,10 @@ import QuerySortBy from './QuerySortBy'
 import { type EntityFilterItem } from '../../contracts/EntityFilterItem'
 import { type EntityFieldSchema } from '../WP/WPSchema'
 import { type EntityFieldTypes } from '../Schema/IFieldSchema'
+import QueryFilter from './QueryFilter'
+import QueryOperator from './QueryOperator'
+import { type FilterOperatorType } from 'contracts/FilterOperatorEnum'
 
-// export
 export type QueryParamsType = Partial<{
   pageSize: number
   offset: number
@@ -39,12 +40,6 @@ export class QueryParamsBuilder {
   columns: string[]
 }
 
-// interface QueryRefresh {
-//   refresh: <Entity extends BaseEntity>(
-//     this: Entity,
-//     params?: QueryParamsType
-//   ) => Promise<Entity>
-// }
 export default class Query extends BaseEntity {
   public static url: string = '/api/v3/queries'
 
@@ -71,6 +66,22 @@ export default class Query extends BaseEntity {
 
   @Field('filters', Array)
     filters: QueryFilterInstance[]
+
+  public get queryFilters (): EntityFilterItem[] {
+    const result: EntityFilterItem[] = []
+    for (const filterItem of this.filters) {
+      const filter = new QueryFilter(filterItem._links.filter)
+      const operator = new QueryOperator(filterItem._links.operator)
+      result.push({
+        [filter.id]: {
+          operator: operator.id as FilterOperatorType,
+          values: filterItem.values ?? filterItem._links.values.map(x => BaseEntityAny.idFromLink(x.href))
+        }
+      })
+    }
+
+    return result
+  }
 
   @Field('timelineVisible', Boolean)
     timelineVisible: boolean
