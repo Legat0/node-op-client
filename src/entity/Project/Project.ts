@@ -6,11 +6,15 @@ import Link from '../decorators/Link'
 import QueryFilterInstanceSchema from '../Query/QueryFilterInstanceSchema'
 import type WP from '../WP/WP'
 import EntityRequestBuilder from '../Abstract/EntityRequestBuilder'
+import { BoardGrid } from '../Grid/Grid'
 
 export default class Project extends BaseEntity {
   // ['constructor']: typeof Project
 
   static url = '/api/v3/projects'
+
+  @Field()
+    identifier: string
 
   @Field('name', String)
     name: string
@@ -45,5 +49,9 @@ export default class Project extends BaseEntity {
     return new EntityRequestBuilder<T>(target, {
       url: this.self.href + '/work_packages'
     })
+  }
+
+  public boards (): EntityRequestBuilder<BoardGrid> {
+    return BoardGrid.request().addFilter('scope', '=', [`/projects/${this.id}/boards`])
   }
 }

@@ -107,6 +107,7 @@ export default abstract class BaseEntity extends BaseEntityAny<number> {
     this: Entity
   ): Promise<void> {
     await this.getService().delete(this)
+    this.id = 0
   }
 }
 /** alias for patch */

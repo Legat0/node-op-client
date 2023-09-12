@@ -93,7 +93,7 @@ export default abstract class BaseEntityAny<
   // private $service?: EntityManager;
 
   constructor (
-    init?: number | bigint | string | IEndpoint | IPartialAbstractBody
+    init?: number | bigint | string | IEndpoint | IPartialAbstractBody | BaseEntityAny
   ) {
     super()
     this.body = {
@@ -111,6 +111,8 @@ export default abstract class BaseEntityAny<
         this.id = init as IdType
       } else if (typeof init === 'object' && Object.prototype.hasOwnProperty.call(init, 'href')) {
         this.self = init as IEndpoint
+      } else if (init instanceof BaseEntityAny) {
+        this.fill(init.body)
       } else {
         this.fill(init)
         // Init ID and href
@@ -124,7 +126,7 @@ export default abstract class BaseEntityAny<
     }
   }
 
-  public static make<T extends BaseEntityAny>(this: new (...args: any[]) => T, init?: number | bigint | string | IEndpoint | IPartialAbstractBody): T {
+  public static make<T extends BaseEntityAny>(this: new (...args: any[]) => T, init?: number | bigint | string | IEndpoint | IPartialAbstractBody | BaseEntityAny): T {
     return new this(init)
   }
 

@@ -17,8 +17,8 @@ import { type EntityFieldSchema } from '../WP/WPSchema'
 import { type EntityFieldTypes } from '../Schema/IFieldSchema'
 import QueryFilter from './QueryFilter'
 import QueryOperator from './QueryOperator'
-import { type FilterOperatorType } from 'contracts/FilterOperatorEnum'
-import { type IEndpoint } from 'entity/Abstract/IEndpoint'
+import { FilterOperatorEnum, type FilterOperatorType } from '../../contracts/FilterOperatorEnum'
+import { type IEndpoint } from '../Abstract/IEndpoint'
 
 export type QueryParamsType = Partial<{
   pageSize: number
@@ -42,7 +42,7 @@ export class QueryParamsBuilder {
 }
 
 interface InputQueryFilterInstance {
-  values?: string[]
+  values?: Array<string | number>
   _links: {
     filter: QueryFilter | IEndpoint | string
     operator: QueryOperator | IEndpoint | FilterOperatorType
@@ -93,6 +93,41 @@ export default class Query extends BaseEntity {
         }
       }
     })
+  }
+
+  public removeFilter (filter: QueryFilter | IEndpoint | string): this {
+    const index = this.body.filters.findIndex(x => QueryFilter.make(x._links.filter ?? '').id === QueryFilter.make(filter).id)
+    if (index >= 0) {
+      const removed = this.body.filters.splice(index, 1)
+      console.log(removed)
+    }
+    return this
+  }
+
+  public addFilter (filter: QueryFilter | IEndpoint | string, operator: FilterOperatorType | QueryOperator | IEndpoint, values?: Array<IEndpoint | string | number>): this {
+    const filterItem: InputQueryFilterInstance = {
+      values: undefined,
+      _links: {
+        filter,
+        operator,
+        values: undefined
+      }
+    }
+    const linkValues = values?.filter((x): x is IEndpoint => typeof x === 'object' && 'href' in x)
+    if (linkValues != null && linkValues.length > 0) {
+      filterItem._links.values = linkValues
+    }
+
+    filterItem.values = values?.filter((x): x is string | number => typeof x === 'string' || typeof x === 'number') ?? []
+
+    this.filters = [
+      filterItem
+    ].concat(this.filters)
+    return this
+  }
+
+  public addManualSortFilter (): this {
+    return this.addFilter('manualSort', FilterOperatorEnum.wp_manual_sort)
   }
 
   /** query-format */

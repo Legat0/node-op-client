@@ -27,10 +27,16 @@ import {
   Version,
   FilterOperatorEnum,
   QueryFilter,
-  QueryOperator
+  QueryOperator,
+  Grid,
+  GridTypeEnum,
+  GridWidget,
+  GridWidgetQuery,
+  BoardGrid
 } from './src'
 import _ from 'lodash'
 import { VersionSharingEnum } from './src/entity/Version/Version'
+import { GridWidgetTypeEnum } from 'entity/Grid/IGridBody'
 
 dotenv.config()
 
@@ -39,6 +45,7 @@ const Config = {
   WP_ID: 2421,
   WP_EXTERNAL_ID: 'МТ-429',
   QUERY_ID: 51,
+  BOARD_ID: 19,
   PROJECT_FIELD_EXTERNAL_ID:
     process.env.REACT_APP__OP_PROJECT_FIELD_EXTERNAL_ID ?? 'customField1',
   PROJECT_FIELD_FIELD_MAP:
@@ -605,15 +612,12 @@ async function testQueryCRUD (): Promise<void> {
         operator: FilterOperatorEnum.in,
         values: [new User('me')]
       }
-    },
-    {
-      _links: {
-        filter: 'customField139',
-        operator: FilterOperatorEnum.gte
-      },
-      values: ['123']
     }
   ]
+  // 1.2.4 OR use addFilter / removeFilter
+  query.addFilter('customField139', FilterOperatorEnum.gte, ['123'])
+  query.addFilter('removeField', FilterOperatorEnum.equal, ['test'])
+  query.removeFilter('removeField')
   await query.save()
   // await query.create() // Or
   console.log(query.id)
@@ -701,9 +705,53 @@ async function testVersions (): Promise<void> {
     list.map((x) => _.pick(x, ['id', 'name', 'status', 'sharing']))
   )
 }
+async function testGrids (): Promise<void> {
+  // 1. getAll
+  const list = await Grid.getAll({ pageSize: -1 })
+  console.table(list.map((x) => _.pick(x, ['id', 'name'])))
+}
+
+async function testBoards (): Promise<void> {
+  // 1. getAll Project Boards (Grid + filter by scope)
+  const p = new Project(Config.PROJECT_ID)
+  // 1.1 use project model
+  const boards = await p.boards().getAll({ pageSize: -1 })
+  // OR 1.2 use Grid + filter
+  // const boards = await Grid.request().addFilter('scope', '=', [`/projects/${p.id}/boards`]).getAll({ pageSize: -1 })
+  console.table(boards.map((x) => _.pick(x, ['id', 'name'])))
+
+  // 2. find by id
+  const board = await BoardGrid.findOrFail(Config.BOARD_ID)
+  console.log(_.pick(board, ['id', 'name', 'options']))
+
+  // 3. Create Board. Example free-board
+  const newBoard = new BoardGrid()
+  newBoard.name = 'test-create:' + JSON.stringify(new Date())
+  newBoard.type = GridTypeEnum.free
+  newBoard.setScopeProject(p)
+  // 3.1 Create columns= create query + addColumn
+  const query = new Query()
+  query.project = p
+  query.name = 'Список досок без имени'
+  query.addManualSortFilter() // or other filters
+  await query.save()
+  newBoard.addColumn(new GridWidgetQuery(query))
+  try {
+    await newBoard.save()
+  } catch (error) {
+    await query.delete()
+  }
+  console.log(_.pick(newBoard.body, ['id', 'name', 'options']))
+  // 4.update
+  newBoard.name = 'test-update:' + JSON.stringify(new Date())
+  await newBoard.save()
+  // 5. DELETE
+  await newBoard.delete()
+  await query.delete()
+}
 
 async function main (): Promise<void> {
-  await testQueryCRUD()
+  await testBoards()
 }
 
 main().catch(console.error)

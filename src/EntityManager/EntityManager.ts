@@ -484,11 +484,13 @@ export class EntityManager {
   async delete<T extends BaseEntity>(
     entity: T
   ): Promise<void> {
-    const url = new URL(entity.self.href ?? '', this.config.baseUrl)
+    if (entity.id > 0) {
+      const url = new URL(entity.self.href ?? '', this.config.baseUrl)
 
-    await this.fetch(url, {
-      method: 'DELETE'
-    })
+      await this.fetch(url, {
+        method: 'DELETE'
+      })
+    }
   }
 
   public async first<T extends BaseEntity>(

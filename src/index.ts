@@ -24,6 +24,7 @@ import WP from './entity/WP/WP'
 import Query from './entity/Query/Query'
 import QueryFilter from './entity/Query/QueryFilter'
 import QueryOperator from './entity/Query/QueryOperator'
+import Grid, { BoardGrid, GridWidget, GridWidgetQuery } from './entity/Grid/Grid'
 import View from './entity/View/View'
 import QueryForm from './entity/Query/QueryForm'
 import QueryFilterInstanceSchema from './entity/Query/QueryFilterInstanceSchema'
@@ -40,6 +41,7 @@ export { PrincipalTypeEnum } from './entity/Principal/Principal'
 export { type EntityFilterItem } from './contracts/EntityFilterItem'
 export { FilterOperatorEnum } from './contracts/FilterOperatorEnum'
 export { ViewsTypeEnum } from './entity/View/IViewBody'
+export { GridTypeEnum } from './entity/Grid/IGridBody'
 
 export { type EntityManagerConfig, type ICollectionStat, CollectionStat } from './EntityManager/EntityManager'
 export {
@@ -63,6 +65,10 @@ export {
   TypeEnum,
   WP,
   View,
+  Grid,
+  BoardGrid,
+  GridWidget,
+  GridWidgetQuery,
   Query,
   QueryFilter,
   QueryOperator,
