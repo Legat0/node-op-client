@@ -42,6 +42,7 @@ export { type EntityFilterItem } from './contracts/EntityFilterItem'
 export { FilterOperatorEnum } from './contracts/FilterOperatorEnum'
 export { ViewsTypeEnum } from './entity/View/IViewBody'
 export { GridTypeEnum } from './entity/Grid/IGridBody'
+export { type InputQueryFilterInstance } from './entity/Query/Query'
 
 export { type EntityManagerConfig, type ICollectionStat, CollectionStat } from './EntityManager/EntityManager'
 export {

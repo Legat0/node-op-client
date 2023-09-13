@@ -21,16 +21,46 @@ export class GridWidget implements IGridWidgetBody {
     this.options = options
   }
 
-  public setWidth (startColumn: number, endColumn: number): this {
+  public setPosition (startColumn: number, startRow: number): this {
     this.startColumn = startColumn
-    this.endColumn = endColumn
+    this.startRow = startRow
     return this
   }
 
-  public setHeight (startRow: number, endRow: number): this {
-    this.startRow = startRow
-    this.endRow = endRow
+  public setSize (columns: number, rows: number): this {
+    this.columns = columns
+    this.rows = rows
     return this
+  }
+
+  public setStartColumn (startColumn: number): this {
+    const columns = this.columns
+    this.startColumn = startColumn
+    this.columns = columns
+    return this
+  }
+
+  public setStartRow (startRow: number): this {
+    const rows = this.rows
+    this.startRow = startRow
+    this.rows = rows
+    return this
+  }
+
+  public get columns (): number {
+    return this.endColumn - this.startColumn
+  }
+
+  public set columns (columns: number) {
+    this.endColumn = this.startColumn + columns
+  }
+
+  public get rows (): number {
+    return this.endRow - this.startRow
+  }
+
+  public set rows (rows: number) {
+    this.endRow = this.startRow + rows
   }
 
   public fill (data: IGridWidgetBody): this {
@@ -165,7 +195,7 @@ export class BoardGrid extends Grid {
 
   public set widgets (v: IGridWidgetBody[]) {
     super.widgets = v
-    this.columnCount = v.length
+    this.columnCount = v.length + 1
   }
 
   // get scopeProject (): Project {
@@ -179,7 +209,56 @@ export class BoardGrid extends Grid {
     return this
   }
 
-  public addColumn (queryColumn: GridWidgetQuery): this {
-    return this.addWidget(queryColumn)
+  /** Добавление виджета-колонки в конец или в позицию startColumn  */
+  public addColumn (queryColumn: GridWidgetQuery, startColumn?: number): this {
+    if (startColumn != null) {
+      // Сдвиг колонок
+      let moveColumn = startColumn
+      for (const widget of this.widgets) {
+        if (widget.startColumn === moveColumn) {
+          widget.startColumn++
+          widget.endColumn++
+          moveColumn = widget.startColumn
+        }
+      }
+      // Вставка колонки
+      queryColumn.startColumn = startColumn
+      this.addWidget(queryColumn)
+      return this
+    } else {
+      // Вставка в конец
+      queryColumn.setStartColumn(this.widgets.length + 1)
+
+      return this.addWidget(queryColumn)
+    }
+  }
+
+  // TODO createColumn
+  // public createColumn (name: string, filters: InputQueryFilterInstance[]): this {
+  //   // return this.addWidget(queryColumn)
+  //   // const query = new Query()
+  //   // query.project = new Project(this.s) // TODO get project id from scope
+  //   // query.name = 'Список досок без имени'
+  //   // query.addManualSortFilter() // or other filters
+  //   // await query.save()
+  //   // newBoard.addColumn(new GridWidgetQuery(query))
+  //   // try {
+  //   //   await newBoard.save()
+  //   // } catch (error) {
+  //   //   await query.delete()
+  //   // }
+  //   return this
+  // }
+
+  public removeColumn (query: number | Query): this {
+    const queryModel = new Query(query)
+    const index = this.widgets.findIndex(x => x.options?.queryId === queryModel.id)
+    if (index >= 0) {
+      this.body.widgets.splice(index, 1)
+      this.columnCount = this.body.widgets.length + 1
+    } else {
+      throw new Error(`widget with options.queryId=${queryModel.id} not found`)
+    }
+    return this
   }
 }

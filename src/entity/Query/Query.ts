@@ -41,7 +41,7 @@ export class QueryParamsBuilder {
   columns: string[]
 }
 
-interface InputQueryFilterInstance {
+export interface InputQueryFilterInstance {
   values?: Array<string | number>
   _links: {
     filter: QueryFilter | IEndpoint | string
@@ -98,13 +98,12 @@ export default class Query extends BaseEntity {
   public removeFilter (filter: QueryFilter | IEndpoint | string): this {
     const index = this.body.filters.findIndex(x => QueryFilter.make(x._links.filter ?? '').id === QueryFilter.make(filter).id)
     if (index >= 0) {
-      const removed = this.body.filters.splice(index, 1)
-      console.log(removed)
+      this.body.filters.splice(index, 1)
     }
     return this
   }
 
-  public addFilter (filter: QueryFilter | IEndpoint | string, operator: FilterOperatorType | QueryOperator | IEndpoint, values?: Array<IEndpoint | string | number>): this {
+  public addFilter (filter: QueryFilter | IEndpoint | string, operator: FilterOperatorType | QueryOperator | IEndpoint, values?: Array<BaseEntityAny | IEndpoint | string | number>): this {
     const filterItem: InputQueryFilterInstance = {
       values: undefined,
       _links: {
@@ -113,7 +112,16 @@ export default class Query extends BaseEntity {
         values: undefined
       }
     }
-    const linkValues = values?.filter((x): x is IEndpoint => typeof x === 'object' && 'href' in x)
+    // const linkValues = values?.filter((x): x is IEndpoint => typeof x === 'object' && 'href' in x)
+    const linkValues = values?.map((x) => {
+      if (x instanceof BaseEntityAny) {
+        return x.self
+      } else if (typeof x === 'object' && 'href' in x) {
+        return x
+      }
+      return undefined
+    }).filter((x): x is IEndpoint => x != null)
+
     if (linkValues != null && linkValues.length > 0) {
       filterItem._links.values = linkValues
     }

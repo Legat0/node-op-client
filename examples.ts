@@ -750,8 +750,51 @@ async function testBoards (): Promise<void> {
   await query.delete()
 }
 
+/** Пример работы с Action Boards */
+async function testActionBoards (): Promise<void> {
+  // Project context
+  const p = new Project(Config.PROJECT_ID)
+  // 1. Create Action Boards
+  const newBoard = new BoardGrid()
+  newBoard.name = 'test-create:' + JSON.stringify(new Date())
+  newBoard.type = GridTypeEnum.action
+  newBoard.attribute = 'status'
+  newBoard.setScopeProject(p)
+  await newBoard.save()
+  console.log(_.pick(newBoard.body, ['id', 'name', 'options']))
+  // 2.1 Create columns= create query + addColumn & update board
+  const query1 = new Query()
+  query1.project = p
+  query1.name = 'status=1'
+  query1.addFilter('status', '=', [new Status(1)])
+  const query2 = new Query()
+  query2.project = p
+  query2.name = 'status=2'
+  query2.addFilter('status', '=', [new Status(2)])
+  try {
+    // trans begin
+    await query1.save()
+    await query2.save()
+
+    newBoard.addColumn(new GridWidgetQuery(query1))
+    newBoard.addColumn(new GridWidgetQuery(query2))
+    await newBoard.save()
+  } catch (error) {
+    console.error(error)
+    // В случае ошибки = Очистка созданных Query (rollback)
+    await query1.delete()
+    await query2.delete()
+    throw error
+  }
+  console.log(_.pick(newBoard.body, ['id', 'name', 'widgets']))
+  // 2.2 Remove column by id query = removeColumn + delete query
+  newBoard.removeColumn(query2.id)
+  await newBoard.save()
+  await query2.delete()
+}
+
 async function main (): Promise<void> {
-  await testBoards()
+  await testActionBoards()
 }
 
 main().catch(console.error)
