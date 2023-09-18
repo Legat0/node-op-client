@@ -3,8 +3,8 @@ import Link from '../decorators/Link'
 import BaseEntity from '../Abstract/BaseEntity'
 import type IQueryBody from './IQueryBody'
 import QueryForm from './QueryForm'
-import Project from '../Project/Project'
 import BaseEntityAny, { LinkEntity } from '../Abstract/BaseEntityAny'
+import Project from '../Project/Project'
 import User from '../User/User'
 import { DisplayRepresentationEnum, HighlightingModeEnum, TimelineZoomLevelEnum, type QueryFilterInstance } from './IQueryBody'
 import Embedded from '../decorators/Embedded'
@@ -19,6 +19,7 @@ import QueryFilter from './QueryFilter'
 import QueryOperator from './QueryOperator'
 import { FilterOperatorEnum, type FilterOperatorType } from '../../contracts/FilterOperatorEnum'
 import { type IEndpoint } from '../Abstract/IEndpoint'
+import type IWPBody from 'entity/WP/IWPBody'
 
 export type QueryParamsType = Partial<{
   pageSize: number
@@ -53,6 +54,8 @@ export interface InputQueryFilterInstance {
 export default class Query extends BaseEntity {
   public static url: string = '/api/v3/queries'
 
+  body: IQueryBody
+
   @Field('name', String)
     name: string
 
@@ -69,7 +72,7 @@ export default class Query extends BaseEntity {
     updatedAt: Date
 
   @Link('project', Project)
-    project?: LinkEntity<Project>
+    project: LinkEntity<Project>
 
   @Link('user', User)
     user: LinkEntity<User>
@@ -93,49 +96,6 @@ export default class Query extends BaseEntity {
         }
       }
     })
-  }
-
-  public removeFilter (filter: QueryFilter | IEndpoint | string): this {
-    const index = this.body.filters.findIndex(x => QueryFilter.make(x._links.filter ?? '').id === QueryFilter.make(filter).id)
-    if (index >= 0) {
-      this.body.filters.splice(index, 1)
-    }
-    return this
-  }
-
-  public addFilter (filter: QueryFilter | IEndpoint | string, operator: FilterOperatorType | QueryOperator | IEndpoint, values?: Array<BaseEntityAny | IEndpoint | string | number>): this {
-    const filterItem: InputQueryFilterInstance = {
-      values: undefined,
-      _links: {
-        filter,
-        operator,
-        values: undefined
-      }
-    }
-    // const linkValues = values?.filter((x): x is IEndpoint => typeof x === 'object' && 'href' in x)
-    const linkValues = values?.map((x) => {
-      if (x instanceof BaseEntityAny) {
-        return x.self
-      } else if (typeof x === 'object' && 'href' in x) {
-        return x
-      }
-      return undefined
-    }).filter((x): x is IEndpoint => x != null)
-
-    if (linkValues != null && linkValues.length > 0) {
-      filterItem._links.values = linkValues
-    }
-
-    filterItem.values = values?.filter((x): x is string | number => typeof x === 'string' || typeof x === 'number') ?? []
-
-    this.filters = [
-      filterItem
-    ].concat(this.filters)
-    return this
-  }
-
-  public addManualSortFilter (): this {
-    return this.addFilter('manualSort', FilterOperatorEnum.wp_manual_sort)
   }
 
   /** query-format */
@@ -198,7 +158,48 @@ export default class Query extends BaseEntity {
   @EmbeddedArray('sortBy', QuerySortBy)
     sortBy: QuerySortBy[]
 
-  body: IQueryBody
+  public removeFilter (filter: QueryFilter | IEndpoint | string): this {
+    const index = this.body.filters.findIndex(x => QueryFilter.make(x._links.filter ?? '').id === QueryFilter.make(filter).id)
+    if (index >= 0) {
+      this.body.filters.splice(index, 1)
+    }
+    return this
+  }
+
+  public addFilter (filter: QueryFilter | IEndpoint | string, operator: FilterOperatorType | QueryOperator | IEndpoint, values?: Array<BaseEntityAny | IEndpoint | string | number>): this {
+    const filterItem: InputQueryFilterInstance = {
+      values: undefined,
+      _links: {
+        filter,
+        operator,
+        values: undefined
+      }
+    }
+    // const linkValues = values?.filter((x): x is IEndpoint => typeof x === 'object' && 'href' in x)
+    const linkValues = values?.map((x) => {
+      if (x instanceof BaseEntityAny) {
+        return x.self
+      } else if (typeof x === 'object' && 'href' in x) {
+        return x
+      }
+      return undefined
+    }).filter((x): x is IEndpoint => x != null)
+
+    if (linkValues != null && linkValues.length > 0) {
+      filterItem._links.values = linkValues
+    }
+
+    filterItem.values = values?.filter((x): x is string | number => typeof x === 'string' || typeof x === 'number') ?? []
+
+    this.filters = [
+      filterItem
+    ].concat(this.filters)
+    return this
+  }
+
+  public addManualSortFilter (): this {
+    return this.addFilter('manualSort', FilterOperatorEnum.wp_manual_sort)
+  }
 
   public static async form (query?: Query): Promise<QueryForm> {
     const result = await QueryForm.getService().fetch(QueryForm.url, {
@@ -237,40 +238,39 @@ export default class Query extends BaseEntity {
 
   public async refresh<Entity extends this>(
     this: Entity,
-    params?: QueryParamsType
+    params?: QueryParamsType,
+    signal?: AbortSignal | null
   ): Promise<Entity> {
     return await this.getService().refresh(
-      this, params
+      this, params, signal
     )
   }
 
   public async loadResultPage (
-    offset: number
+    offset: number, signal?: AbortSignal | null
   ): Promise<this> {
-    return await this.refresh({ offset })
+    return await this.refresh({ offset }, signal)
   }
 
   /** TODO getAllResults see getAll() */
   public async loadAllResults (
-    options: { threads?: number } = {}
+    options: { threads?: number, signal?: AbortSignal | null } = {}
   ): Promise<this> {
     if (this.results.count < this.results.total) {
       const sema = this.getService().createSema(options.threads)
 
       const pageCount = Math.ceil(this.results.total / this.results.pageSize)
-
       const pages = await Promise.all(
-        Array.from({ length: pageCount - 1 }, (_, i) => i + 2).map(async (offset) => {
-          const queryCopy = new Query(this.self)
+        Array.from({ length: pageCount - 1 }, (_, i) => i + 2).map(async (offset: number): Promise<IWPBody[]> => {
           await sema?.acquire()
           try {
-            await queryCopy.refresh({ offset })
+            const queryCopy = new Query(this.self)
+            await queryCopy.refresh({ offset }, options.signal)
             return queryCopy.results.body._embedded.elements
           } finally {
             sema?.release()
           }
-        }
-        )
+        })
       )
 
       pages.forEach((page) => {
@@ -295,5 +295,16 @@ export default class Query extends BaseEntity {
       method: 'PATCH'
     })
     this.body.starred = false
+  }
+
+  /**
+   * Сохранение сортировки задач в Query
+   * @param delta - объект с измененными сортировками задач, в формате {[wp_id]:new_position}
+   */
+  public async order (delta: Record<number, number>): Promise<void> {
+    await this.getService().fetch(this.makeUrl('order'), {
+      method: 'PATCH',
+      body: delta
+    })
   }
 }

@@ -20,6 +20,7 @@ export default class EntityRequestBuilder<T extends BaseEntity> {
   Required<Pick<GetManyOptions, 'filters'>>
 
   private mapField?: MapFieldType
+  private signal: AbortSignal | null = null
 
   constructor (
     T: new (...args: any[]) => T,
@@ -40,6 +41,11 @@ export default class EntityRequestBuilder<T extends BaseEntity> {
 
   public useMapField (map: MapFieldType): this {
     this.mapField = map
+    return this
+  }
+
+  public useSignal (signal: AbortSignal | null = null): this {
+    this.signal = signal
     return this
   }
 
@@ -124,11 +130,12 @@ export default class EntityRequestBuilder<T extends BaseEntity> {
   }
 
   public async first (): Promise<EntityCollectionElement<T> | null> {
-    return await this.service.first<T>(this.entity, this.requstParams.filters)
+    return await this.service.first<T>(this.entity, this.requstParams.filters, this.signal)
   }
 
   public async getAll (
-    options?: GetAllOptions
+    options?: GetAllOptions,
+    signal?: AbortSignal | null
   ): Promise<Array<EntityCollectionElement<T>>> {
     const resultFilters = this.requstParams.filters.concat(
       options?.filters ?? []
@@ -137,12 +144,13 @@ export default class EntityRequestBuilder<T extends BaseEntity> {
       ...this.requstParams,
       ...options,
       filters: resultFilters
-    })
+    }, signal ?? this.signal)
   }
 
   public async getMany (
     options?: GetManyOptions,
-    stat?: ICollectionStat
+    stat?: ICollectionStat,
+    signal?: AbortSignal | null
   ): Promise<Array<EntityCollectionElement<T>>> {
     const resultFilters = this.requstParams.filters.concat(
       options?.filters ?? []
@@ -154,7 +162,7 @@ export default class EntityRequestBuilder<T extends BaseEntity> {
         ...options,
         filters: resultFilters
       },
-      stat
+      stat, signal ?? this.signal
     )
     if (this.mapField != null) {
       for (const item of elements) {

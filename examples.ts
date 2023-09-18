@@ -36,7 +36,6 @@ import {
 } from './src'
 import _ from 'lodash'
 import { VersionSharingEnum } from './src/entity/Version/Version'
-import { GridWidgetTypeEnum } from 'entity/Grid/IGridBody'
 
 dotenv.config()
 
@@ -456,7 +455,11 @@ async function testGetQueries (): Promise<void> {
     _.pick(queryWithFilter.results, ['total', 'count', 'pageSize', 'offset'])
   )
   // 4. Загрузка всех задач в несколько потоков loadAllResults
-  await queryWithFilter.loadAllResults({ threads: 6 })
+  const controller = new AbortController()
+  setTimeout(() => {
+    controller.abort() // abort request
+  }, 1000)
+  await queryWithFilter.loadAllResults({ threads: 1, signal: controller.signal }) // if abort throw Error "AbortError: The user aborted a request"
   console.log({
     elementsCount: queryWithFilter.results.body._embedded.elements.length,
     count: queryWithFilter.results.count
@@ -646,6 +649,8 @@ async function testQueryCRUD (): Promise<void> {
     project: query.project?.id,
     starred: query.starred
   })
+  // 5. work_packages order
+  await query.order({ [Config.WP_ID]: 0, [Config.WP_ID + 1]: 2 })
   // 5. delete
   await query.delete()
 }
@@ -794,7 +799,7 @@ async function testActionBoards (): Promise<void> {
 }
 
 async function main (): Promise<void> {
-  await testActionBoards()
+  await testGetQueries()
 }
 
 main().catch(console.error)

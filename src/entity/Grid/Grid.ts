@@ -3,9 +3,9 @@ import BaseEntity from '../Abstract/BaseEntity'
 import type IGridBody from './IGridBody'
 import { GridOptions, type GridWidgetOptions, GridWidgetTypeEnum, type IGridWidgetBody, type GridWidgetQueryOptions, type GridTypeEnum, type BoardGridOptions } from './IGridBody'
 import { type EntityFilterItem } from '../../contracts/EntityFilterItem'
+import Project from '../Project/Project'
 import Query from '../Query/Query'
 import { type IEndpoint } from '../Abstract/IEndpoint'
-import Project from '../Project/Project'
 
 export class GridWidget implements IGridWidgetBody {
   _type: 'GridWidget' = 'GridWidget'

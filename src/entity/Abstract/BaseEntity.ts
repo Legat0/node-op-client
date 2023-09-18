@@ -82,10 +82,11 @@ export default abstract class BaseEntity extends BaseEntityAny<number> {
 
   public async refresh<Entity extends this>(
     this: Entity,
-    params?: Record<string, any>
+    params?: Record<string, any>,
+    signal?: AbortSignal | null
   ): Promise<Entity> {
     return await this.getService().refresh(
-      this, params
+      this, params, signal
     )
   }
 

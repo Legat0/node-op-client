@@ -9,9 +9,9 @@ import EntityRequestBuilder from '../Abstract/EntityRequestBuilder'
 import { BoardGrid } from '../Grid/Grid'
 
 export default class Project extends BaseEntity {
-  // ['constructor']: typeof Project
-
   static url = '/api/v3/projects'
+
+  body: IProjectBody
 
   @Field()
     identifier: string
@@ -43,9 +43,7 @@ export default class Project extends BaseEntity {
     })
   }
 
-  body: IProjectBody
-
-  workPackages<T extends WP>(target: new (...args: any[]) => T): EntityRequestBuilder<T> {
+  public workPackages<T extends WP>(target: new (...args: any[]) => T): EntityRequestBuilder<T> {
     return new EntityRequestBuilder<T>(target, {
       url: this.self.href + '/work_packages'
     })

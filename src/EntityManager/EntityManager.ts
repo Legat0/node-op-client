@@ -4,7 +4,7 @@ import type BaseEntityAny from '../entity/Abstract/BaseEntityAny'
 import type BaseEntity from '../entity/Abstract/BaseEntity'
 import { type IEndpoint } from '../entity/Abstract/IEndpoint'
 import ClientOAuth2, { type Options, type Token } from 'client-oauth2'
-import WP from '../entity/WP/WP'
+import type WP from '../entity/WP/WP'
 import EventEmitter from 'events'
 import { type EntityFilterItem } from '../contracts/EntityFilterItem'
 import { type FilterOperatorType } from '../contracts/FilterOperatorEnum'
@@ -13,6 +13,7 @@ import { Sema } from 'async-sema'
 interface IFetchInit extends Omit<RequestInit, 'body'> {
   headers?: Record<string, string>
   body?: BodyInit | object
+  signal?: AbortSignal | null
 }
 
 function base64Encode (s: string): string {
@@ -210,10 +211,13 @@ export class EntityManager {
         'Basic ' + base64Encode('apikey:' + apikey)
     }
 
-    this.emitter.emit(this.onBeforeRequest.name, {
-      url,
-      ...requestInit
-    })
+    if (requestInit.signal?.aborted !== true) {
+      this.emitter.emit(this.onBeforeRequest.name, {
+        url,
+        ...requestInit
+      })
+    }
+
     // выполняем запрос
     const response = await fetch(url, requestInit)
     // let resultAsText = await response.text();
@@ -233,7 +237,7 @@ export class EntityManager {
       } catch {}
     }
 
-    if (result._type === 'Error') {
+    if (result?._type === 'Error') {
       let message = `${response.status} [${result.errorIdentifier}] ${result.message}`
       if (result?._embedded?.errors?.length > 0) {
         message +=
@@ -259,15 +263,16 @@ export class EntityManager {
   async get<T extends BaseEntityAny>(
     Type: any,
     id: number | string | bigint | IEndpoint,
-    params?: Record<string, any>
+    params?: Record<string, any>,
+    signal?: AbortSignal | null
   ): Promise<T> {
     const entity = new Type(id)
-    return await this.refresh(entity, params)
+    return await this.refresh(entity, params, signal)
   }
 
-  async refresh<T extends BaseEntity>(entity: T, params?: Record<string, any>): Promise<T> {
+  async refresh<T extends BaseEntity>(entity: T, params?: Record<string, any>, signal?: AbortSignal | null): Promise<T> {
     const url = this.makeUrl(entity.self.href ?? '', params)
-    const body = await this.fetch(url)
+    const body = await this.fetch(url, { signal })
     entity.fill(body)
     entity._links = {}
     return entity
@@ -277,13 +282,14 @@ export class EntityManager {
     Type: any,
     options: GetManyOptions = {},
     stat?: ICollectionStat,
+    signal?: AbortSignal | null,
     sema?: Sema
   ): Promise<Array<EntityCollectionElement<T>>> {
     const elements: Array<EntityCollectionElement<T>> = []
     const url = this.makeUrl(options.url ?? Type.url, options)
     await sema?.acquire()
     try {
-      const fetchResult = await this.fetch(url)
+      const fetchResult = await this.fetch(url, { signal })
       elements.push(
         ...fetchResult._embedded.elements.map(
           (eachElement: any) => new Type(eachElement)
@@ -306,9 +312,10 @@ export class EntityManager {
   async getMany<T extends BaseEntityAny>(
     Type: any,
     options: GetManyOptions = {},
-    stat?: ICollectionStat
+    stat?: ICollectionStat,
+    signal?: AbortSignal | null
   ): Promise<Array<EntityCollectionElement<T>>> {
-    return await this.getPage(Type, options, stat)
+    return await this.getPage(Type, options, stat, signal)
   }
   // async getMany<T extends BaseEntityAny>(
   //   T: any,
@@ -361,9 +368,19 @@ export class EntityManager {
     )
   }
 
+  public static async runWithSema (asyncTask: () => Promise<any>, sema: Sema): Promise<void> {
+    await sema.acquire()
+    try {
+      await asyncTask()
+    } finally {
+      sema.release()
+    }
+  }
+
   async getAll<T extends BaseEntityAny>(
     Type: any,
-    options: GetAllOptions = {}
+    options: GetAllOptions = {},
+    signal?: AbortSignal | null
   ): Promise<Array<EntityCollectionElement<T>>> {
     let elements: Array<EntityCollectionElement<T>> = []
     const pageSize = options.pageSize ?? this.config.pageSize
@@ -375,7 +392,7 @@ export class EntityManager {
         pageSize,
         offset: 1
       },
-      stat
+      stat, signal
     )
 
     elements = elements.concat(firstPageElements)
@@ -394,6 +411,7 @@ export class EntityManager {
               offset
             },
             undefined,
+            signal,
             sema
           )
         }
@@ -419,7 +437,7 @@ export class EntityManager {
     fieldPaths?: Array<keyof T['body'] | string>,
     notify?: boolean
   ): Promise<T> {
-    const isWP = entity instanceof WP
+    const isWP = entity.body._type === 'WorkPackage'
     const patch = JSON.parse(
       JSON.stringify(
         (fieldPaths != null)
@@ -429,7 +447,7 @@ export class EntityManager {
     )
     delete patch.createdAt
     delete patch.updatedAt
-    if (entity instanceof WP) {
+    if (isWP) {
       if (patch.lockVersion === undefined || patch.lockVersion === null) {
         const actualCopy = await this.get<WP>(entity.constructor, entity.id)
         patch.lockVersion = actualCopy.body.lockVersion
@@ -446,7 +464,7 @@ export class EntityManager {
     if ((fieldPaths == null) || fieldPaths.length === 0) {
       entity.body = patchedBody
     } else {
-      if (entity instanceof WP) { entity.body.lockVersion = patchedBody.lockVersion }
+      if (isWP) { entity.body.lockVersion = patchedBody.lockVersion }
 
       entity.body.updatedAt = patchedBody.updatedAt;
 
@@ -495,12 +513,13 @@ export class EntityManager {
 
   public async first<T extends BaseEntity>(
     Type: any,
-    filters?: EntityFilterItem[]
+    filters?: EntityFilterItem[],
+    signal?: AbortSignal | null
   ): Promise<EntityCollectionElement<T> | null> {
     const result = await this.getMany<T>(Type, {
       pageSize: 1,
       filters
-    })
+    }, undefined, signal)
 
     return result.length > 0 ? result[0] : null
   }
@@ -508,21 +527,23 @@ export class EntityManager {
   public async findOrFail<T extends BaseEntityAny>(
     Type: any,
     id: number | string | bigint | IEndpoint,
-    params?: Record<string, any>
+    params?: Record<string, any>,
+    signal?: AbortSignal | null
   ): Promise<T> {
-    return await this.get(Type, id, params)
+    return await this.get(Type, id, params, signal)
   }
 
   public async findBy<T extends BaseEntity>(
     Type: any,
     key: keyof T['body'] | string,
-    value: any
+    value: any,
+    signal?: AbortSignal | null
   ): Promise<EntityCollectionElement<T> | null> {
     // filter[UserExtend.fieldExternalId()] = { operator: '=', values: [id] }
     const filter = {
       [key]: { operator: '=' as FilterOperatorType, values: [value] }
     }
-    return await this.first<T>(Type, [filter])
+    return await this.first<T>(Type, [filter], signal)
   }
 
   /**
