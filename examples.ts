@@ -32,7 +32,8 @@ import {
   GridTypeEnum,
   GridWidget,
   GridWidgetQuery,
-  BoardGrid
+  BoardGrid,
+  Notification
 } from './src'
 import _ from 'lodash'
 import { VersionSharingEnum } from './src/entity/Version/Version'
@@ -44,6 +45,7 @@ const Config = {
   WP_ID: 2421,
   WP_EXTERNAL_ID: 'МТ-429',
   QUERY_ID: 51,
+  NOTIFICATION_ID: 5760,
   BOARD_ID: 19,
   PROJECT_FIELD_EXTERNAL_ID:
     process.env.REACT_APP__OP_PROJECT_FIELD_EXTERNAL_ID ?? 'customField1',
@@ -798,8 +800,29 @@ async function testActionBoards (): Promise<void> {
   await query2.delete()
 }
 
+/** Пример работы с Action Boards */
+async function testNotifications (): Promise<void> {
+  // 1. get all Notification
+  const allNotification = await Notification.getPage({ pageSize: 10 })
+  console.table(allNotification.map(x => _.pick(x.body, 'id', 'subject', 'reason', 'readIAN')))
+  // 2. get all unread
+  const unreadList = await Notification.request().isUnread().getPage({ pageSize: 10 })
+  console.table(unreadList.map(x => _.pick(x.body, 'id', 'subject', 'reason', 'readIAN')))
+  // 3. get by ID
+  const notification = await Notification.findOrFail(Config.NOTIFICATION_ID)
+  console.log(_.pick(notification.body, 'id', 'reason', 'readIAN'))
+  // 4. readIAM update = read / unread action
+  await notification.read()
+  await notification.refresh()
+  console.log(_.pick(notification.body, 'id', 'reason', 'readIAN'))
+  await notification.unread()
+  // 5. Mass read / unread actions
+  await Notification.request().isUnread().whereProject(Config.PROJECT_ID).readAll()
+  await Notification.request().isUnread().whereProject(Config.PROJECT_ID).unreadAll()
+}
+
 async function main (): Promise<void> {
-  await testGetQueries()
+  await testNotifications()
 }
 
 main().catch(console.error)

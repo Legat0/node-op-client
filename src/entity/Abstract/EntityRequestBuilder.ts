@@ -20,7 +20,7 @@ export default class EntityRequestBuilder<T extends BaseEntity> {
   Required<Pick<GetManyOptions, 'filters'>>
 
   private mapField?: MapFieldType
-  private signal: AbortSignal | null = null
+  protected signal: AbortSignal | null = null
 
   constructor (
     T: new (...args: any[]) => T,
@@ -34,9 +34,17 @@ export default class EntityRequestBuilder<T extends BaseEntity> {
     this.mapField = map
   }
 
+  public get filters (): EntityFilterItem[] {
+    return this.requstParams.filters
+  }
+
   public useService (service?: EntityManager): this {
     if (service != null) this.service = service
     return this
+  }
+
+  public getService (): EntityManager {
+    return this.service
   }
 
   public useMapField (map: MapFieldType): this {
@@ -61,6 +69,16 @@ export default class EntityRequestBuilder<T extends BaseEntity> {
   ): this {
     key = this.mapField?.[String(key)] ?? key
     const filter: EntityFilterItem = { [key]: { operator, values } }
+    this.requstParams.filters.push(filter)
+    return this
+  }
+
+  public addFilterBool (
+    booleanField: keyof T['body'] | `customField${number}` | string,
+    value: boolean
+  ): this {
+    booleanField = this.mapField?.[String(booleanField)] ?? booleanField
+    const filter: EntityFilterItem = { [booleanField]: { operator: FilterOperatorEnum.equal, values: [value ? 't' : 'f'] } }
     this.requstParams.filters.push(filter)
     return this
   }
@@ -147,7 +165,7 @@ export default class EntityRequestBuilder<T extends BaseEntity> {
     }, signal ?? this.signal)
   }
 
-  public async getMany (
+  public async getPage (
     options?: GetManyOptions,
     stat?: ICollectionStat,
     signal?: AbortSignal | null
@@ -155,7 +173,7 @@ export default class EntityRequestBuilder<T extends BaseEntity> {
     const resultFilters = this.requstParams.filters.concat(
       options?.filters ?? []
     )
-    const elements = await this.service.getMany<T>(
+    const elements = await this.service.getPage<T>(
       this.entity,
       {
         ...this.requstParams,
@@ -171,4 +189,10 @@ export default class EntityRequestBuilder<T extends BaseEntity> {
     }
     return elements
   }
+
+  /** alias for getPage */
+  public getMany: (...args: Parameters<typeof EntityRequestBuilder.prototype.getPage>) => ReturnType<typeof EntityRequestBuilder.prototype.getPage>
 }
+
+/** alias for patch */
+EntityRequestBuilder.prototype.getMany = EntityRequestBuilder.prototype.getPage

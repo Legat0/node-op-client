@@ -120,5 +120,8 @@ CLIENT_ID=...
 CLIENT_SECRET=...
 ```
 
-## ToDo
-* Add more documentation
+## TODO bugs/features
+* import circuit: Query -> Project -> BoardGrid -> Grid -> Query. Resolve = Grid import priority
+* 
+
+

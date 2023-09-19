@@ -17,10 +17,6 @@ const get = require('keypather/get')
 export interface IPartialAbstractBody
   extends Partial<IAbstractBody<number | string>> {}
 
-// interface IPartialAbstractBody extends Partial<Omit<IWPBody, "_links">> {
-//   _links?: Partial<IAbstractBody["_links"]>;
-// }
-
 export type LinkEntity<T extends BaseEntityAny> = Pick<
 T,
 'id' | 'self' | 'parseSelf' | 'makeUrl'

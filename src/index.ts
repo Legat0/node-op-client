@@ -30,6 +30,7 @@ import View from './entity/View/View'
 import QueryForm from './entity/Query/QueryForm'
 import QueryFilterInstanceSchema from './entity/Query/QueryFilterInstanceSchema'
 import Project from './entity/Project/Project'
+import Notification from './entity/Notification/Notification'
 
 import Field from './entity/decorators/Field'
 import Link from './entity/decorators/Link'
@@ -88,6 +89,7 @@ export {
   Principal,
   PlaceholderUser,
   User,
+  Notification,
   Group
 }
 
