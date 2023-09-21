@@ -1,6 +1,6 @@
 {
   "version": "1.15.37",
-  "name": "op-client",
+  "name": "@automacon/op-client",
   "_from": "op-client",
   "license": "MIT",
   "main": "dist/src/index.js",

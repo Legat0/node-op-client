@@ -73,6 +73,7 @@ export default abstract class BaseEntityAny<
   ['constructor']: typeof BaseEntityAny
 
   static url: string = '/should_be_defined'
+  static type: string = ''
 
   // TODO rename to $source or $body
   body: IAbstractBody<IdType>
@@ -93,6 +94,7 @@ export default abstract class BaseEntityAny<
   ) {
     super()
     this.body = {
+      _type: this.constructor.url,
       id: 0 as IdType,
       _links: {
         self: { href: null }

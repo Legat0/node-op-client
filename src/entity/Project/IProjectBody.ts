@@ -3,7 +3,7 @@ import type IAbstractBody from '../Abstract/IAbstractBody'
 import { type WithCustomFields, type WithTimestamps } from '../Abstract/IAbstractBody'
 
 export default interface IProjectBody extends IAbstractBody, WithTimestamps, WithCustomFields {
-  _type?: 'Project'
+  _type: 'Project'
   identifier: string
   name?: string
   active?: boolean

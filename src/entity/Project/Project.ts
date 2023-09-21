@@ -10,6 +10,7 @@ import { BoardGrid } from '../Grid/Grid'
 
 export default class Project extends BaseEntity {
   static url = '/api/v3/projects'
+  static type = 'Project'
 
   body: IProjectBody
 

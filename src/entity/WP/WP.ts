@@ -21,6 +21,9 @@ export default class WP extends BaseEntity {
   // ['constructor']: typeof WP
 
   static url = '/api/v3/work_packages'
+  static type = 'WorkPackage'
+
+  body: IWPBody
 
   @Field('subject', String)
     subject: string
@@ -75,8 +78,6 @@ export default class WP extends BaseEntity {
 
   @Link('parent', WP)
     parent: LinkEntity<WP> | null
-
-  body: IWPBody
 
   get ancestor (): WP | null | undefined {
     if (this.body._links.ancestors == null) {

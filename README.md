@@ -125,3 +125,4 @@ CLIENT_SECRET=...
 * 
 
 
+// set NPM_TOKEN=your_token && npm publish

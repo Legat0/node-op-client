@@ -41,7 +41,7 @@ import { VersionSharingEnum } from './src/entity/Version/Version'
 dotenv.config()
 
 const Config = {
-  PROJECT_ID: 9,
+  PROJECT_ID: 3,
   WP_ID: 2421,
   WP_EXTERNAL_ID: 'МТ-429',
   QUERY_ID: 51,
@@ -131,6 +131,8 @@ EntityManager.instance.useConfig({
 /** Проект */
 async function testProject (): Promise<void> {
   const p = await ProjectExt.findOrFail(Config.PROJECT_ID)
+  console.log(p.fieldMap)
+  await p.refresh()
   console.log(p.fieldMap)
 }
 
@@ -822,7 +824,7 @@ async function testNotifications (): Promise<void> {
 }
 
 async function main (): Promise<void> {
-  await testNotifications()
+  await testProject()
 }
 
 main().catch(console.error)

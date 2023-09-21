@@ -32,6 +32,7 @@ function getApiKeyFromLocalStorage (): string | null {
 export enum AuthTypeEnum {
   OAUTH = 'OAUTH',
   APIKEY = 'APIKEY',
+  SESSION = 'SESSION',
 }
 export interface EntityManagerConfig {
   baseUrl: string
@@ -130,7 +131,10 @@ export class EntityManager {
 
   public makeUrl (path: string | URL, params?: Record<string, any>): URL {
     const REMOVE_PARAMS = ['url']
-    const url = new URL(path, this.config.baseUrl)
+    const baseUrl = new URL(this.config.baseUrl)
+    const rootPath = baseUrl.pathname // see rootPath=OPENPROJECT_RAILS__RELATIVE__URL__ROOT
+    const relativePath = new URL(path, this.config.baseUrl).pathname.replace(new RegExp(`^${rootPath}`, 'i'), '')
+    const url = new URL(rootPath + relativePath, this.config.baseUrl)
 
     if (params != null) {
       Object.entries(params).filter(([key, value]) => !REMOVE_PARAMS.includes(key))
@@ -163,7 +167,7 @@ export class EntityManager {
     // собираем url
     url = this.makeUrl(url)
 
-    if (this.config.authType === 'OAUTH') {
+    if (this.config.authType === AuthTypeEnum.OAUTH) {
       // получаем токен из ОП
       if (this.oauthToken == null || this.oauthToken.expired()) {
         // authorization code flow
@@ -205,10 +209,12 @@ export class EntityManager {
         ...requestInit
       } as any)
       requestInit.headers = signedOptions.headers
-    } else {
+    } else if (this.config.authType === AuthTypeEnum.APIKEY) {
       const apikey = this.config.apiKeyOptions?.getApiKey()
       requestInit.headers.Authorization =
         'Basic ' + base64Encode('apikey:' + apikey)
+    } else {
+      // SESSION = only cookies ?
     }
 
     if (requestInit.signal?.aborted !== true) {
@@ -461,6 +467,8 @@ export class EntityManager {
       method: 'PATCH',
       body: patch
     })
+    if (patchedBody == null) throw new Error('PATCH result is empty')
+
     if ((fieldPaths == null) || fieldPaths.length === 0) {
       entity.body = patchedBody
     } else {
